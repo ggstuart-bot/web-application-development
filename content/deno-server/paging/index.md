@@ -105,7 +105,7 @@ Now update **server/views/partials/bookCard.js** to use it when a book has no co
 
 **server/views/partials/bookCard.js**
 ```JavaScript{hl_lines="1 4 7"}
-export const DEFAULT_COVER = "/assets/default-cover.svg";
+const DEFAULT_COVER = "/assets/default-cover.svg";
 
 export function bookCard(book) {
     const cover = book.coverUrl ?? DEFAULT_COVER;
@@ -122,6 +122,7 @@ export function bookCard(book) {
 ```
 
 `DEFAULT_COVER` is the address of our default cover.
+It isn't exported, because only this module uses it.
 Writing a constant like this in capitals is a common convention for a fixed value.
 
 `??` is the [nullish coalescing operator][nullish coalescing].
@@ -314,7 +315,7 @@ export function getBooks(page, pageSize) {
 }
 
 // Placeholder: this will need to change when we add search
-export function countBooks() {
+function countBooks() {
     return db.prepare(`
         SELECT count(*) AS count FROM books
     `).get().count;
@@ -328,6 +329,7 @@ export function countPages(pageSize) {
 
 [`count(*)`][count] counts the rows, and `AS count` names the column in the result.
 `.get()` returns that one row as an object, so `.get().count` is the number of books.
+`countBooks` isn't exported, because only `countPages` uses it.
 
 `countPages` divides the number of books by the page size and rounds up with [`Math.ceil`][math ceil].
 40 books at 16 per page is 2.5, so we have 3 pages.
