@@ -524,6 +524,8 @@ date: Wed, 04 Nov 2026 10:54:05 GMT
 
 [http://localhost:8000/books?page=abc][books page abc] and [http://localhost:8000/books?page=0][books page 0] are not found too, but [http://localhost:8000/books?page=3][books page 3] still works.
 
+{{<figure src="images/books-page-not-found.webp" alt="The Bookshelves not-found page, headed Not found, with the text The requested resource was not found" caption="A page past the end, such as page 100, gets our not-found page.">}}
+
 ## All the books {#all-books}
 
 Our pages can cope with any number of books now.
@@ -555,6 +557,10 @@ Refresh [http://localhost:8000/books][books] and click **next** a few times.
 1,000 books at 16 per page is 63 pages.
 The last one, [http://localhost:8000/books?page=63][books page 63], has 8 books, says **page 63 of 63** and has no **next** link.
 [http://localhost:8000/books?page=64][books page 64] is our not-found page.
+
+{{<figure src="images/books-page-1.webp" alt="The books page showing 16 book cards in four columns, with page 1 of 63 and a next link below them" caption="Page 1 of 63, with only a next link.">}}
+
+{{<figure src="images/books-page-2.webp" alt="The books page showing a different 16 book cards, with previous, page 2 of 63 and next links below them" caption="Page 2 has both previous and next links.">}}
 
 Each page is still 16 books, however many are in the database.
 
