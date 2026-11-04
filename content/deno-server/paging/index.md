@@ -22,9 +22,10 @@ By the end of this exercise you should be able to:
 
 - Show a default value when some data are missing, using `??`
 - Read a value from the *query string* of a URL
-- Pass a *context* object from our request handler to a controller
+- Add a value to our *context* object when a controller needs it
 - Fetch one page of rows from the database with `LIMIT` and `OFFSET`
 - Link each page of books to the previous and next pages
+- Respond with `404 Not Found` for a page that doesn't exist
 
 ## Setup
 
@@ -151,15 +152,18 @@ Our server ignores the query string, so `/books?page=2` gets exactly the same pa
 
 To read the query string, the books controller needs the `url`.
 
-### A context object {#ctx}
+### Adding the url to ctx {#ctx-url}
 
-Update **server/main.js** to create a `ctx` object and pass it to the books controller.
+We already make a `url` in **server/main.js**, and we already pass our [context object][ctx] to every controller.
+So let's put the `url` in `ctx` too.
+
+Update **server/main.js**.
 
 **server/main.js**
-```JavaScript{hl_lines="8 24"}
-import { serveDir } from "@std/http";
+```JavaScript{hl_lines="8"}
 import { homeController } from "./controllers/home.js";
 import { booksController } from "./controllers/books.js";
+import { staticController } from "./controllers/static.js";
 import { notFoundController } from "./controllers/notFound.js";
 
 export function server(request) {
@@ -171,65 +175,59 @@ export function server(request) {
 
     // Placeholder: this will need to change when we add a router
     if (url.pathname.startsWith("/assets/")) {
-        return serveDir(request, {
-            fsRoot: "public",
-            urlRoot: "assets",
-        });
+        return staticController(ctx);
     }
     if (url.pathname === "/") {
-        return homeController();
+        return homeController(ctx);
     }
     if (url.pathname === "/books") {
         return booksController(ctx);
     }
-    return notFoundController();
+    return notFoundController(ctx);
 }
 ```
 
-`ctx` is our *context* object.
-It carries information about the request to the code that handles it.
-For now, it holds the `request` and the `url` we have already made.
-
-> This is the *context pattern*.
-> Rather than giving our functions a growing list of arguments, we pass one object that carries everything needed to handle the request.
-> It will be a core part of our architecture, and `ctx` will grow as our app does, for example to carry the user who is signed in.
-> Our placeholders in **server/tools/render.js** and **server/views/layout.js** mention `ctx` too.
-> They don't need it yet, so we leave them alone.
-
-The books controller doesn't use `ctx` yet, so refresh [http://localhost:8000/books][books] to check that nothing has changed.
+Now `ctx` holds the `request` and the `url` we have already made.
+The books controller doesn't declare `ctx` yet, so refresh [http://localhost:8000/books][books] to check that nothing has changed.
 
 ### Reading the page number {#page-number}
 
 Update **server/controllers/books.js** to take `ctx` and work out which page was asked for.
 
 **server/controllers/books.js**
-```JavaScript{hl_lines="5-9"}
+```JavaScript{hl_lines="5 7-12"}
 import { getBooks } from "../models/books.js";
 import { render } from "../tools/render.js";
 import { booksView } from "../views/books.js";
 
+const PAGE_SIZE = 16;
+
 export function booksController(ctx) {
     const { url } = ctx;
-    let page = Number(url.searchParams.get("page"));
+    const pageParam = url.searchParams.get("page");
+    let page = pageParam === null ? 1 : Number(pageParam);
     if (!Number.isSafeInteger(page) || page < 1) page = 1;
-    const books = getBooks(page);
+    const books = getBooks(page, PAGE_SIZE);
     return render(booksView, { title: "Books", data: { books } });
 }
 ```
 
+The controller uses `ctx` now, so it declares it.
+
+- `PAGE_SIZE` is the number of books on a page. The controller decides how many books to show, so the constant lives here.
 - `const { url } = ctx;` takes the `url` out of `ctx`, with [destructuring][destructuring]. It is the same `URL` that **server/main.js** uses for `url.pathname`.
 - [`url.searchParams`][search params] reads the query string for us. `get("page")` gives us the string `"2"` for `?page=2`, and `null` if there is no `page` at all.
-- [`Number`][number] turns the string into a number.
+- With no `page` at all we use page 1. Otherwise, [`Number`][number] turns the string into a number.
 
 Anyone can type anything into the query string, so we can't trust it.
-`Number` turns `null` into `0`, `"abc"` into `NaN` and `"1.5"` into `1.5`.
+`Number` turns `""` into `0`, `"abc"` into `NaN` and `"1.5"` into `1.5`.
 [`Number.isSafeInteger`][is safe integer] is only true for a whole number, and `page < 1` catches zero and negative numbers.
-In all of those cases we use page 1 instead.
+For now, in all of those cases we use page 1 instead.
 
 > `page` is declared with [`let`][let] rather than `const`, because we might change it on the next line.
 
-Finally, we pass `page` to `getBooks`.
-`getBooks` doesn't take a page yet, so it simply ignores it.
+Finally, we pass `page` and `PAGE_SIZE` to `getBooks`.
+`getBooks` doesn't take them yet, so it simply ignores them.
 Refresh [http://localhost:8000/books?page=2][books page 2], and you should still see all 40 books.
 
 ### One page of books {#limit-offset}
@@ -237,10 +235,8 @@ Refresh [http://localhost:8000/books?page=2][books page 2], and you should still
 Now update the [model][mvc] in **server/models/books.js** so that `getBooks` returns only one page of books.
 
 **server/models/books.js**
-```JavaScript{hl_lines="3 14 17-18"}
+```JavaScript{hl_lines="12 15-16"}
 import { db } from "./db.js";
-
-export const PAGE_SIZE = 16;
 
 export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
     return db.prepare(`
@@ -251,16 +247,15 @@ export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
 }
 
 // Placeholder: this will need to change when we add search
-export function getBooks(page) {
+export function getBooks(page, pageSize) {
     return db.prepare(`
         SELECT id, title, author, year, thumbnailUrl, coverUrl FROM books
         LIMIT :limit OFFSET :offset
-    `).all({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
+    `).all({ limit: pageSize, offset: (page - 1) * pageSize });
 }
 ```
 
-`PAGE_SIZE` is the number of books on a page.
-We export it because the controller will need it soon.
+`getBooks` now takes the page number and the page size.
 
 [`LIMIT` and `OFFSET`][limit offset] ask the database for part of the results.
 `OFFSET` skips some rows, and `LIMIT` says how many to return after that.
@@ -275,18 +270,18 @@ Now try [http://localhost:8000/books?page=2][books page 2].
 HTTP/1.1 200 OK
 content-type: text/html
 content-length: 6255
-date: Fri, 30 Oct 2026 10:27:06 GMT
+date: Wed, 04 Nov 2026 10:54:00 GMT
 ```
 
 A different 16 books.
 [http://localhost:8000/books?page=3][books page 3] has the last 8, including **Memoirs of a Geisha** and **Little Women**.
 
 > Try [http://localhost:8000/books?page=0][books page 0] and [http://localhost:8000/books?page=abc][books page abc].
-> Both give you page 1.
+> For now, both give you page 1.
 
 Each part of [model-view-controller][mvc] has its own job.
-The model knows how to fetch one page of books.
-The controller works out which page was asked for.
+The model knows how to fetch one page of books, of any size.
+The controller works out which page was asked for, and how many books go on it.
 The view hasn't changed.
 It still shows whatever books it is given.
 
@@ -295,14 +290,12 @@ It still shows whatever books it is given.
 Nobody is going to type `?page=2` into the address bar.
 We need links to the previous and next pages.
 
-The view needs to know whether there is a next page, which means we need to know how many books there are.
-Add a `countBooks` function to the end of **server/models/books.js**.
+The view needs to know how many pages there are, which means we need to know how many books there are.
+Add `countBooks` and `countPages` functions to the end of **server/models/books.js**.
 
 **server/models/books.js**
-```JavaScript{hl_lines="21-26"}
+```JavaScript{hl_lines="19-24 26-29"}
 import { db } from "./db.js";
-
-export const PAGE_SIZE = 16;
 
 export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
     return db.prepare(`
@@ -313,11 +306,11 @@ export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
 }
 
 // Placeholder: this will need to change when we add search
-export function getBooks(page) {
+export function getBooks(page, pageSize) {
     return db.prepare(`
         SELECT id, title, author, year, thumbnailUrl, coverUrl FROM books
         LIMIT :limit OFFSET :offset
-    `).all({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
+    `).all({ limit: pageSize, offset: (page - 1) * pageSize });
 }
 
 // Placeholder: this will need to change when we add search
@@ -326,34 +319,45 @@ export function countBooks() {
         SELECT count(*) AS count FROM books
     `).get().count;
 }
+
+// Placeholder: this will need to change when we add search
+export function countPages(pageSize) {
+    return Math.ceil(countBooks() / pageSize);
+}
 ```
 
 [`count(*)`][count] counts the rows, and `AS count` names the column in the result.
 `.get()` returns that one row as an object, so `.get().count` is the number of books.
 
-> Like `getBooks`, `countBooks` has a placeholder.
+`countPages` divides the number of books by the page size and rounds up with [`Math.ceil`][math ceil].
+40 books at 16 per page is 2.5, so we have 3 pages.
+
+> Like `getBooks`, both new functions have a placeholder.
 > This code will need to change when we add search.
 
-Now update **server/controllers/books.js** to work out whether there is a next page, and pass `page` and `hasNext` to the view.
+Now update **server/controllers/books.js** to count the pages, and pass `page` and `pageCount` to the view.
 
 **server/controllers/books.js**
-```JavaScript{hl_lines="1 10-11"}
-import { countBooks, getBooks, PAGE_SIZE } from "../models/books.js";
+```JavaScript{hl_lines="1 12 14"}
+import { countPages, getBooks } from "../models/books.js";
 import { render } from "../tools/render.js";
 import { booksView } from "../views/books.js";
 
+const PAGE_SIZE = 16;
+
 export function booksController(ctx) {
     const { url } = ctx;
-    let page = Number(url.searchParams.get("page"));
+    const pageParam = url.searchParams.get("page");
+    let page = pageParam === null ? 1 : Number(pageParam);
     if (!Number.isSafeInteger(page) || page < 1) page = 1;
-    const books = getBooks(page);
-    const hasNext = page * PAGE_SIZE < countBooks();
-    return render(booksView, { title: "Books", data: { books, page, hasNext } });
+    const pageCount = Math.max(1, countPages(PAGE_SIZE));
+    const books = getBooks(page, PAGE_SIZE);
+    return render(booksView, { title: "Books", data: { books, page, pageCount } });
 }
 ```
 
-Pages 1 to `page` hold `page * PAGE_SIZE` books.
-If there are more books than that, there is a next page.
+With no books at all, `countPages` would give us 0.
+[`Math.max`][math max] makes sure there is always at least one page.
 
 Finally, update **server/views/books.js** to add the links.
 
@@ -361,7 +365,7 @@ Finally, update **server/views/books.js** to add the links.
 ```JavaScript{hl_lines="3 12 17-25"}
 import { bookCard } from "./partials/bookCard.js";
 
-export function booksView({ data: { books, page, hasNext } }) {
+export function booksView({ data: { books, page, pageCount } }) {
     return `
         <section>
             <header>
@@ -370,33 +374,33 @@ export function booksView({ data: { books, page, hasNext } }) {
             <ul class="grid">
                 ${books.map(bookCard).join("")}
             </ul>
-            ${pagination(page, hasNext)}
+            ${pagination(page, pageCount)}
         </section>
     `;
 }
 
 // Previous, the current page and next. Nothing at all if there's only one page
-function pagination(page, hasNext) {
-    if (page === 1 && !hasNext) return "";
+function pagination(page, pageCount) {
+    if (pageCount <= 1) return "";
     return `<nav aria-label="Pagination">
             ${page > 1 ? `<a href="/books?page=${page - 1}" rel="prev">previous</a>` : ""}
-            <a href="/books?page=${page}" aria-current="page">page ${page}</a>
-            ${hasNext ? `<a href="/books?page=${page + 1}" rel="next">next</a>` : ""}
+            <a href="/books?page=${page}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="/books?page=${page + 1}" rel="next">next</a>` : ""}
         </nav>`;
 }
 ```
 
-The view takes `page` and `hasNext` out of `data`, alongside `books`.
+The view takes `page` and `pageCount` out of `data`, alongside `books`.
 `pagination` is another function used only by this view, so it isn't exported.
 
-- On page 1 with no next page there is nothing to link to, so `pagination` returns an empty string straight away.
+- With only one page there is nothing to link to, so `pagination` returns an empty string straight away.
 - The previous and next links use the [conditional operator][conditional operator], just like our page titles. Each one is only there if there is a page to go to.
-- The current page is a link to itself. [`aria-current="page"`][aria-current] tells screen readers that this is the page we are on.
+- The current page is a link to itself, which says which page we are on and how many there are. [`aria-current="page"`][aria-current] tells screen readers that this is the page we are on.
 - [`rel="prev"` and `rel="next"`][rel] say what each link is for.
 - There are now two `<nav>` elements on the page. [`aria-label`][aria-label] gives this one a name, so screen reader users can tell it apart from the one in our header.
 
 Refresh [http://localhost:8000/books][books].
-Below the books are **page 1** and **next**.
+Below the books are **page 1 of 3** and **next**.
 Our `nav` rule in **public/styles.css** puts them in a centred row, just like the header links.
 Click **next** twice, then **previous**.
 On page 3 there is no **next** link.
@@ -406,7 +410,7 @@ View the page source (**Ctrl + U**) on [http://localhost:8000/books?page=2][book
 ```html {linenos=false}
             <nav aria-label="Pagination">
             <a href="/books?page=1" rel="prev">previous</a>
-            <a href="/books?page=2" aria-current="page">page 2</a>
+            <a href="/books?page=2" aria-current="page">page 2 of 3</a>
             <a href="/books?page=3" rel="next">next</a>
         </nav>
 ```
@@ -425,7 +429,7 @@ Update **server/views/books.js**.
 ```JavaScript{hl_lines="21-23 27-29"}
 import { bookCard } from "./partials/bookCard.js";
 
-export function booksView({ data: { books, page, hasNext } }) {
+export function booksView({ data: { books, page, pageCount } }) {
     return `
         <section>
             <header>
@@ -434,18 +438,18 @@ export function booksView({ data: { books, page, hasNext } }) {
             <ul class="grid">
                 ${books.map(bookCard).join("")}
             </ul>
-            ${pagination(page, hasNext)}
+            ${pagination(page, pageCount)}
         </section>
     `;
 }
 
 // Previous, the current page and next. Nothing at all if there's only one page
-function pagination(page, hasNext) {
-    if (page === 1 && !hasNext) return "";
+function pagination(page, pageCount) {
+    if (pageCount <= 1) return "";
     return `<nav aria-label="Pagination">
             ${page > 1 ? `<a href="${pageUrl(page - 1)}" rel="prev">previous</a>` : ""}
-            <a href="${pageUrl(page)}" aria-current="page">page ${page}</a>
-            ${hasNext ? `<a href="${pageUrl(page + 1)}" rel="next">next</a>` : ""}
+            <a href="${pageUrl(page)}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="${pageUrl(page + 1)}" rel="next">next</a>` : ""}
         </nav>`;
 }
 
@@ -464,11 +468,59 @@ Refresh [http://localhost:8000/books?page=2][books page 2] and check the **netwo
 ```http
 HTTP/1.1 200 OK
 content-type: text/html
-content-length: 6495
-date: Fri, 30 Oct 2026 10:27:08 GMT
+content-length: 6500
+date: Wed, 04 Nov 2026 10:54:03 GMT
 ```
 
 The page source should be exactly the same as before.
+
+## A page that doesn't exist {#invalid-page}
+
+Click [http://localhost:8000/books?page=4][books page 4].
+There are no books, a **previous** link, and **page 4 of 3**.
+And [http://localhost:8000/books?page=abc][books page abc] quietly gives us page 1.
+
+Neither page exists.
+Like any other missing page, they should get our [not-found page][not-found page] with `404 Not Found`.
+
+Update **server/controllers/books.js**.
+
+**server/controllers/books.js**
+```JavaScript{hl_lines="4 11 13-15"}
+import { countPages, getBooks } from "../models/books.js";
+import { render } from "../tools/render.js";
+import { booksView } from "../views/books.js";
+import { notFoundController } from "./notFound.js";
+
+const PAGE_SIZE = 16;
+
+export function booksController(ctx) {
+    const { url } = ctx;
+    const pageParam = url.searchParams.get("page");
+    const page = pageParam === null ? 1 : Number(pageParam);
+    const pageCount = Math.max(1, countPages(PAGE_SIZE));
+    if (!Number.isSafeInteger(page) || page < 1 || page > pageCount) {
+        return notFoundController();
+    }
+    const books = getBooks(page, PAGE_SIZE);
+    return render(booksView, { title: "Books", data: { books, page, pageCount } });
+}
+```
+
+- The books controller imports `notFoundController`, and returns its response for a page that doesn't exist. A controller can use another controller like this.
+- The check comes after we count the pages, so `page > pageCount` catches a page past the end.
+- `page` is a `const` now, because we never change it.
+
+Click [http://localhost:8000/books?page=4][books page 4] again.
+
+```http
+HTTP/1.1 404 Not Found
+content-type: text/html
+content-length: 1083
+date: Wed, 04 Nov 2026 10:54:05 GMT
+```
+
+[http://localhost:8000/books?page=abc][books page abc] and [http://localhost:8000/books?page=0][books page 0] are not found too, but [http://localhost:8000/books?page=3][books page 3] still works.
 
 ## All the books {#all-books}
 
@@ -499,15 +551,17 @@ Task db:seed deno -A tasks/db-seed.js
 
 Refresh [http://localhost:8000/books][books] and click **next** a few times.
 1,000 books at 16 per page is 63 pages.
-The last one, [http://localhost:8000/books?page=63][books page 63], has 8 books and no **next** link.
+The last one, [http://localhost:8000/books?page=63][books page 63], has 8 books, says **page 63 of 63** and has no **next** link.
+[http://localhost:8000/books?page=64][books page 64] is our not-found page.
 
 Each page is still 16 books, however many are in the database.
 
 ## Conclusion
 
 We seeded more books and found some with no cover, so `bookCard` now uses a default cover.
-We passed a context object, `ctx`, to the books controller, so that it can read the page number from the query string.
-The model fetches one page of books with `LIMIT` and `OFFSET`, and counts them, so the view can link to the previous and next pages.
+We added the `url` to our context object, so that the books controller can read the page number from the query string.
+The controller asks the model for one page of books with `LIMIT` and `OFFSET`, and for the number of pages, so the view can link to the previous and next pages.
+A page that doesn't exist gets our not-found page.
 The database now holds all 1,000 books.
 
 Our project now looks like this.
@@ -528,7 +582,8 @@ my-app/
 │   ├── controllers/
 │   │   ├── books.js
 │   │   ├── home.js
-│   │   └── notFound.js
+│   │   ├── notFound.js
+│   │   └── static.js
 │   ├── models/
 │   │   ├── books.js
 │   │   └── db.js
@@ -560,10 +615,6 @@ Fix it.
 
 > We will start the next exercise with our solution, so you can compare it with yours.
 
-Finally, something to think about.
-What happens at [http://localhost:8000/books?page=100][books page 100]?
-What should happen?
-
 [previous exercise]: deno-server/books-page/
 [books]: http://localhost:8000/books
 [linked resources]: deno-server/static-files/#linked-resources
@@ -573,6 +624,7 @@ What should happen?
 [books page 2]: http://localhost:8000/books?page=2
 [url search]: https://developer.mozilla.org/en-US/docs/Web/API/URL/search
 [url pathname]: deno-server/static-files/#url-pathname
+[ctx]: deno-server/controllers/#ctx
 [destructuring]: deno-server/controllers/#title
 [search params]: https://developer.mozilla.org/en-US/docs/Web/API/URL/searchParams
 [number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/Number
@@ -585,6 +637,8 @@ What should happen?
 [books page 0]: http://localhost:8000/books?page=0
 [books page abc]: http://localhost:8000/books?page=abc
 [count]: https://www.sqlite.org/lang_aggfunc.html#count
+[math ceil]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/ceil
+[math max]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max
 [conditional operator]: deno-server/controllers/#title
 [aria-current]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-current
 [rel]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel
@@ -592,6 +646,7 @@ What should happen?
 [hateoas]: https://en.wikipedia.org/wiki/HATEOAS
 [url search params]: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams
 [refactoring]: deno-server/views/#refactoring
+[books page 4]: http://localhost:8000/books?page=4
 [books page 63]: http://localhost:8000/books?page=63
+[books page 64]: http://localhost:8000/books?page=64
 [books page 17]: http://localhost:8000/books?page=17
-[books page 100]: http://localhost:8000/books?page=100

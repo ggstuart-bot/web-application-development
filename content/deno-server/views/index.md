@@ -161,7 +161,7 @@ Create a folder called **views** inside the **server** folder, with a file calle
 
 **server/views/layout.js**
 ```JavaScript
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages, sign-in and nav highlighting
 export function layout(content) {
     const document = `
         <!DOCTYPE html>
@@ -184,8 +184,8 @@ export function layout(content) {
 The function takes the `content` as an argument and puts it inside the `<body>` with `${content}`.
 This is the same template literal we have been using all along, with a value dropped into it.
 
-> `ctx` will be a *context* object, carrying information about the request through our code.
-> The layout will need some of that information later, so this line will change when we add it.
+> The layout will need more than just the content later on, when we add flash messages, sign-in and nav highlighting.
+> This line will change when we add them.
 
 Now we can use our new function in **server/main.js**.
 Each page only needs to provide its content.
@@ -383,7 +383,7 @@ Update **server/views/layout.js**.
 
 **server/views/layout.js**
 ```JavaScript{hl_lines="9 14-20 22-27"}
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages, sign-in and nav highlighting
 export function layout(content) {
     const document = `
         <!DOCTYPE html>

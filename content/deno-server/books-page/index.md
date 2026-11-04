@@ -91,34 +91,35 @@ Our request handler in **server/main.js** decides which controller to call, and 
 Update **server/main.js** to import the new controller and call it for `/books`.
 
 **server/main.js**
-```JavaScript{hl_lines="3 22-24"}
-import { serveDir } from "@std/http";
+```JavaScript{hl_lines="2 20-22"}
 import { homeController } from "./controllers/home.js";
 import { booksController } from "./controllers/books.js";
+import { staticController } from "./controllers/static.js";
 import { notFoundController } from "./controllers/notFound.js";
 
 export function server(request) {
     const url = new URL(request.url);
+    const ctx = { request };
 
     // Placeholder: this will need to change when we add middleware
     console.log(request.method, url.pathname);
 
     // Placeholder: this will need to change when we add a router
     if (url.pathname.startsWith("/assets/")) {
-        return serveDir(request, {
-            fsRoot: "public",
-            urlRoot: "assets",
-        });
+        return staticController(ctx);
     }
     if (url.pathname === "/") {
-        return homeController();
+        return homeController(ctx);
     }
     if (url.pathname === "/books") {
-        return booksController();
+        return booksController(ctx);
     }
-    return notFoundController();
+    return notFoundController(ctx);
 }
 ```
+
+Like every controller, `booksController` is passed our [context object][ctx].
+It doesn't need anything from it yet, so it doesn't declare it.
 
 Refresh [http://localhost:8000/books][books].
 
@@ -151,7 +152,7 @@ Update **server/tools/render.js** so that `render` takes a `data` option and giv
 ```JavaScript{hl_lines="4 6"}
 import { layout } from "../views/layout.js";
 
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages and sign-in
 export function render(view, { status, title, data } = {}) {
     const headers = new Headers({ "content-type": "text/html" });
     return new Response(layout(view({ data }), { title }), { headers, status });
@@ -650,7 +651,7 @@ Our `if` chain is longer.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="10 13 20 22-24 28 34"}
+```plaintext {linenos=false, hl_lines="10 13 21 23-25 29 35"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -665,7 +666,8 @@ my-app/
 │   ├── controllers/
 │   │   ├── books.js
 │   │   ├── home.js
-│   │   └── notFound.js
+│   │   ├── notFound.js
+│   │   └── static.js
 │   ├── models/
 │   │   ├── books.js
 │   │   └── db.js
@@ -705,6 +707,7 @@ What would happen with all 1,000?
 [localhost]: http://localhost:8000/
 [controllers]: deno-server/controllers/#controllers
 [books]: http://localhost:8000/books
+[ctx]: deno-server/controllers/#ctx
 [nope]: http://localhost:8000/nope
 [technical debt]: deno-server/controllers/#technical-debt
 [mvc]: deno-server/database/#mvc
