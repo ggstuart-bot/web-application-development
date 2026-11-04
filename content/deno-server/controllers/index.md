@@ -630,7 +630,7 @@ Our request handler now only decides which controller to call.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="8-13 16 18"}
+```plaintext {linenos=false, hl_lines="8-13"}
 my-app/
 ├── .vscode/
 │   └── settings.json

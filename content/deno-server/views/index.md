@@ -355,7 +355,7 @@ From now on, every page in our app will have its own view.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="8-12"}
+```plaintext {linenos=false, hl_lines="8-11"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -548,7 +548,7 @@ Because every page uses the same layout, we added a header and footer to every p
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="6 8-12"}
+```plaintext {linenos=false, hl_lines="8-11"}
 my-app/
 ├── .vscode/
 │   └── settings.json

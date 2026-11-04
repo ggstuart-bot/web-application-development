@@ -651,7 +651,7 @@ Our `if` chain is longer.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="10 13 21 23-25 29 35"}
+```plaintext {linenos=false, hl_lines="13 23-25"}
 my-app/
 ├── .vscode/
 │   └── settings.json

@@ -301,7 +301,7 @@ We fixed it with a fallback that returns a `404 Not Found` response for any path
 Our project still looks like this.
 Only **server/main.js** has changed.
 
-```plaintext {linenos=false, hl_lines="8"}
+```plaintext {linenos=false}
 my-app/
 ├── .vscode/
 │   └── settings.json

@@ -142,7 +142,7 @@ Deno.serve(server);
 
 Our project now looks like this.
 
-```plaintext {linenos=false}
+```plaintext {linenos=false, hl_lines="2-7"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -607,7 +607,7 @@ We have `serve` and `dev` tasks to run the server.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="8"}
+```plaintext {linenos=false, hl_lines="2-8"}
 my-app/
 ├── .vscode/
 │   └── settings.json
