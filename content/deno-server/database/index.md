@@ -445,7 +445,7 @@ Our website hasn't changed, but the books are ready for the books page.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="4-7 15-17 26-28 30-32"}
+```plaintext {linenos=false, hl_lines="4-7 16-18 27-29 31"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -459,7 +459,8 @@ my-app/
 ├── server/
 │   ├── controllers/
 │   │   ├── home.js
-│   │   └── notFound.js
+│   │   ├── notFound.js
+│   │   └── static.js
 │   ├── models/
 │   │   ├── books.js
 │   │   └── db.js

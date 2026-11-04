@@ -24,6 +24,7 @@ By the end of this exercise you should be able to:
 - Give a function optional settings with an options object and a default value
 - Pass a function as a value, and explain why `render` should call the view itself
 - Explain what a *controller* is and where controllers fit in model-view-controller
+- Pass a *context* object to our controllers
 
 ## Setup
 
@@ -101,7 +102,7 @@ Create a folder called **tools** inside the **server** folder, with a file calle
 ```JavaScript
 import { layout } from "../views/layout.js";
 
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages and sign-in
 export function render(content) {
     const headers = new Headers({ "content-type": "text/html" });
     return new Response(layout(content), { headers });
@@ -111,8 +112,8 @@ export function render(content) {
 `render` takes some content, wraps it in our layout and returns a `Response` with the `content-type` header.
 Notice that **server/tools/render.js** now imports `layout`, rather than **server/main.js**.
 
-> The `ctx` mentioned in the comment will be a *context* object, carrying information about the request through our code.
-> Like `layout`, `render` will need some of that information later, so this line will change when we add it.
+> Like `layout`, `render` will need more information later on, when we add flash messages and sign-in.
+> This line will change when we add them.
 
 Now use `render` for both routes in **server/main.js**.
 
@@ -177,7 +178,7 @@ Update **server/tools/render.js** so that `render` takes an optional second argu
 ```JavaScript{hl_lines="4 6"}
 import { layout } from "../views/layout.js";
 
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages and sign-in
 export function render(content, { status } = {}) {
     const headers = new Headers({ "content-type": "text/html" });
     return new Response(layout(content), { headers, status });
@@ -251,7 +252,7 @@ Update **server/views/layout.js** so that `layout` also takes an options object 
 
 **server/views/layout.js**
 ```JavaScript{hl_lines="2 7"}
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages, sign-in and nav highlighting
 export function layout(content, { title } = {}) {
     const document = `
         <!DOCTYPE html>
@@ -298,7 +299,7 @@ Now add a `title` option to `render` and pass it through to `layout`.
 ```JavaScript{hl_lines="4 6"}
 import { layout } from "../views/layout.js";
 
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages and sign-in
 export function render(content, { status, title } = {}) {
     const headers = new Headers({ "content-type": "text/html" });
     return new Response(layout(content, { title }), { headers, status });
@@ -375,7 +376,7 @@ Update **server/tools/render.js** so that it takes a `view` function and calls i
 ```JavaScript{hl_lines="4 6"}
 import { layout } from "../views/layout.js";
 
-// Placeholder: this will need to change when we add ctx
+// Placeholder: this will need to change when we add flash messages and sign-in
 export function render(view, { status, title } = {}) {
     const headers = new Headers({ "content-type": "text/html" });
     return new Response(layout(view(), { title }), { headers, status });
@@ -494,6 +495,7 @@ See [TypeError: "x" is not a function][not a function].
 
 Our request handler in **server/main.js** still does two jobs.
 It decides which page was requested, and it knows how to build each page: which view, which status and which title.
+It also knows how to serve our static files.
 Let's separate them.
 
 Create a folder called **controllers** inside the **server** folder, with a file for each page.
@@ -520,33 +522,50 @@ export function notFoundController() {
 
 These are *controllers*.
 A controller is a function which handles a request.
-It chooses the view, sets any options, and returns the response.
+These two choose the view, set any options, and return the response.
+
+Serving static files is a job for a controller too, even though there is no view.
+Add a third file to the **controllers** folder.
+
+**server/controllers/static.js**
+```JavaScript
+import { serveDir } from "@std/http";
+
+export function staticController(ctx) {
+    const { request } = ctx;
+    return serveDir(request, {
+        fsRoot: "public",
+        urlRoot: "assets",
+    });
+}
+```
+
+This is the same `serveDir` call we had in **server/main.js**.
+The difference is where the `request` comes from.
 
 Now update **server/main.js** to import the controllers and call them.
 
 **server/main.js**
-```JavaScript{hl_lines="2-3 19 21"}
-import { serveDir } from "@std/http";
+```JavaScript{hl_lines="1-3 7 14 17 19"}
 import { homeController } from "./controllers/home.js";
+import { staticController } from "./controllers/static.js";
 import { notFoundController } from "./controllers/notFound.js";
 
 export function server(request) {
     const url = new URL(request.url);
+    const ctx = { request };
 
     // Placeholder: this will need to change when we add middleware
     console.log(request.method, url.pathname);
 
     // Placeholder: this will need to change when we add a router
     if (url.pathname.startsWith("/assets/")) {
-        return serveDir(request, {
-            fsRoot: "public",
-            urlRoot: "assets",
-        });
+        return staticController(ctx);
     }
     if (url.pathname === "/") {
-        return homeController();
+        return homeController(ctx);
     }
-    return notFoundController();
+    return notFoundController(ctx);
 }
 ```
 
@@ -555,7 +574,23 @@ export function server(request) {
 > When we add a router, it will decide which controller to call and these `if` statements will be replaced.
 
 Our request handler now only decides which controller to call.
-It doesn't import any views, and it doesn't know anything about HTML.
+It doesn't import any views or `serveDir`, and it doesn't know anything about HTML.
+
+### A context object {#ctx}
+
+`ctx` is our *context* object.
+It carries information about the request to the controller that handles it.
+For now, it holds just the `request`.
+
+The static controller takes the `request` out of `ctx`, with [destructuring][destructuring], and gives it to `serveDir`.
+Our home and not-found controllers don't need anything from `ctx` yet, so they don't declare it.
+**server/main.js** passes `ctx` to every controller anyway.
+
+So a controller is a function which takes the request context and returns a `Response`.
+
+> This is the *context pattern*.
+> Rather than giving our functions a growing list of arguments, we pass one object that carries everything needed to handle the request.
+> It will be a core part of our architecture, and `ctx` will grow as our app does, for example to carry the user who is signed in.
 
 ### The C in MVC {#mvc}
 
@@ -589,12 +624,13 @@ But our code is in much better shape.
 
 We paid off some technical debt with a series of small refactors, checking the browser after each one.
 We moved the response building into a `render` function, gave it `status` and `title` options, and let it call the view itself.
-Then we moved each route's work into a controller, the C in model-view-controller.
+Then we moved each route's work into a controller, the C in model-view-controller, including a controller for our static files.
+Each controller is given a context object, `ctx`, which holds the request.
 Our request handler now only decides which controller to call.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="8-12 15 17"}
+```plaintext {linenos=false, hl_lines="8-13"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -604,7 +640,8 @@ my-app/
 ├── server/
 │   ├── controllers/
 │   │   ├── home.js
-│   │   └── notFound.js
+│   │   ├── notFound.js
+│   │   └── static.js
 │   ├── tools/
 │   │   └── render.js
 │   ├── views/
