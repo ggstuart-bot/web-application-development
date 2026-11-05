@@ -251,15 +251,17 @@ The [`<title>`][title element] is in our layout, so we need to get a title from 
 Update **server/views/layout.js** so that `layout` also takes an options object with a `title`.
 
 **server/views/layout.js**
-```JavaScript{hl_lines="2 7"}
+```JavaScript{hl_lines="2-3 9"}
 // Placeholder: this will need to change when we add flash messages, sign-in and nav highlighting
-export function layout(content, { title } = {}) {
+export function layout(content, page = {}) {
+    const title = page.title ? `${page.title} | Bookshelves` : "Bookshelves";
+
     const document = `
         <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="utf-8">
-                <title>${title ? `${title} | ` : ""}Bookshelves</title>
+                <title>${title}</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <link rel="stylesheet" href="/assets/styles.css">
                 <link rel="icon" href="/assets/icon.svg">
@@ -286,12 +288,14 @@ export function layout(content, { title } = {}) {
 }
 ```
 
-The `<title>` uses the [conditional operator][conditional operator] (`? :`) inside our template literal.
-If there is a `title`, it adds the title and a `|` before **Bookshelves**.
-If there isn't, it adds an empty string, leaving just **Bookshelves**.
+`layout` now takes a second argument, an options object we call `page`, with a default of `{}`.
+Before building the document, we work out the title with the [conditional operator][conditional operator] (`? :`).
+If the page has a `title`, our title is that title, a `|` and **Bookshelves**.
+If it doesn't, our title is just **Bookshelves**.
+Then the `<title>` element only needs `${title}`.
 
-> The part after the `?` is another template literal, nested inside the first.
-> It looks a little odd, but it works just like the outer one.
+> We call the options object `page`, rather than taking `title` straight out of it.
+> We want a variable called `title` for the finished title, and two variables can't share a name.
 
 Now add a `title` option to `render` and pass it through to `layout`.
 
