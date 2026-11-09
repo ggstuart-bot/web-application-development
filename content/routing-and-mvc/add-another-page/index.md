@@ -10,7 +10,7 @@ This will require some routing logic and will create opportunities to avoid repe
 <!--more-->
 
 > Before you start, make sure everything is committed to your git repository. 
-You should have a working **hello world** page from the [previous exercise]({{< ref "/javascript-fundamentals/a-simple-web-server" >}}). 
+You should have a working **hello world** page from the [previous exercise][previous exercise]. 
 
 ## Learning objectives
 
@@ -700,3 +700,5 @@ Our server simply returns an HTML response for these requests stating that the f
 [url api]: https://developer.mozilla.org/en-US/docs/Web/API/URL
 [http://localhost:8000/missing]: http://localhost:8000/missing
 [destructuring]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
+
+[previous exercise]: deno-server/deno-serve/

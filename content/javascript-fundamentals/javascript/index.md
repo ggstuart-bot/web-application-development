@@ -24,4 +24,10 @@ slides:
     - /slides/javascript/deno.md
 ---
 
-A look at the core language
+A look at the core language.
+
+JavaScript was made for the browser and now runs on the server too.
+This lecture covers the core [ECMAScript][ecmascript] syntax and APIs we will use throughout the module: types, data structures, conditionals, loops, functions (including arrow functions), and common array methods such as `map`, `filter`, `reduce` and `join`.
+We will also meet a few web APIs, and note the difference between the language itself and the APIs a runtime provides.
+
+[ecmascript]: https://developer.mozilla.org/en-US/docs/Web/JavaScript

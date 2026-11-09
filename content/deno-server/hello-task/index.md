@@ -11,7 +11,7 @@ In this exercise we will write a hello world programme and run it as a deno task
 <!--more-->
 
 > Before you start, make sure deno is installed and working.
-See the [Deno setup]({{< ref "/javascript-fundamentals/deno-setup" >}}) exercise for details.
+See the [Deno setup][deno setup] exercise for details.
 
 ## Learning objectives
 
@@ -166,3 +166,5 @@ Every task points to a module in the **tasks** folder.
 [deno.json]: https://docs.deno.com/runtime/fundamentals/configuration/
 [permissions]: https://docs.deno.com/runtime/fundamentals/security/
 [while loops]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/while
+
+[deno setup]: javascript-fundamentals/deno-setup/
