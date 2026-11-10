@@ -17,17 +17,262 @@ The way we split it foreshadows the model-view-controller pattern we will use on
 
 By the end of this exercise you should be able to:
 
+- Filter an array with `filter`, `includes` and `toLowerCase`
+- Write an arrow function and pass it to another function
+- Use `if` to handle an empty result
 - Read a search query from the command line or from `prompt`
-- Filter an array with `filter`, `toLowerCase` and `includes`
 - Split a programme into modules with named exports and imports
 - Explain how data, logic and output map onto model, view and controller
 
-## A search query {#query}
+## Filter the books {#filter}
 
-Update **main.js** so that the search term comes from outside the file.
+We want only the books that match a search.
+Arrays have a [`filter`][array filter] method for exactly this.
+
+Update **main.js**, keeping `formatBook` and `formatList` as they are.
 
 **main.js**
-```JavaScript{hl_lines="9 13-14"}
+```JavaScript{hl_lines="12-14 16-17"}
+import books from "./data/books.json" with { type: "json" };
+
+function formatBook(book) {
+    const { title, author, year } = book;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
+}
+
+function formatList(books) {
+    return books.map(formatBook).join("\n------------------------------\n");
+}
+
+function isMatch(book) {
+    return book.title.includes("Hobbit");
+}
+
+const matches = books.filter(isMatch);
+console.log(formatList(matches));
+```
+
+[`includes`][includes] is `true` when one string appears anywhere inside another, so `isMatch` returns `true` for any book with "Hobbit" in its title.
+`filter` calls `isMatch` on every book and keeps the books for which it returns `true`.
+Just like `map`, we pass the function without brackets and let `filter` call it.
+
+```bash {linenos=false}
+deno main.js
+```
+
+```plaintext {linenos=false}
+The Hobbit
+by J.R.R. Tolkien (1937)
+------------------------------
+The Hobbit: Graphic Novel
+by Chuck Dixon, J.R.R. Tolkien (1989)
+------------------------------
+The History of the Hobbit, Part One: Mr. Baggins
+by John D. Rateliff, J.R.R. Tolkien (2007)
+```
+
+## Arrow functions {#arrow-functions}
+
+`isMatch` is only used in one place, and to understand the filter we have to go and find it.
+We can write the function right where it is used instead.
+
+**main.js**
+```JavaScript{hl_lines="12-14"}
+import books from "./data/books.json" with { type: "json" };
+
+function formatBook(book) {
+    const { title, author, year } = book;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
+}
+
+function formatList(books) {
+    return books.map(formatBook).join("\n------------------------------\n");
+}
+
+const matches = books.filter((book) => {
+    return book.title.includes("Hobbit");
+});
+console.log(formatList(matches));
+```
+
+`(book) => { … }` is an [*arrow function*][arrow functions].
+It is a function with no name: `book` is its parameter, and the body is the same as before.
+Now the condition sits next to the `filter` that uses it.
+
+> For a single expression you can drop the braces and the `return`, but the longer form is easier to read while we are learning.
+
+```bash {linenos=false}
+deno main.js
+```
+
+```plaintext {linenos=false}
+The Hobbit
+by J.R.R. Tolkien (1937)
+------------------------------
+The Hobbit: Graphic Novel
+by Chuck Dixon, J.R.R. Tolkien (1989)
+------------------------------
+The History of the Hobbit, Part One: Mr. Baggins
+by John D. Rateliff, J.R.R. Tolkien (2007)
+```
+
+The output hasn't changed.
+
+## A search function {#search-books}
+
+The word "Hobbit" is buried inside our code.
+Let's wrap the search in a function, like `formatBook`, and pass the search term in.
+
+**main.js**
+```JavaScript{hl_lines="12-16 18-19"}
+import books from "./data/books.json" with { type: "json" };
+
+function formatBook(book) {
+    const { title, author, year } = book;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
+}
+
+function formatList(books) {
+    return books.map(formatBook).join("\n------------------------------\n");
+}
+
+function searchBooks(books, query) {
+    return books.filter((book) => {
+        return book.title.includes(query);
+    });
+}
+
+const query = "Hobbit";
+const matches = searchBooks(books, query);
+console.log(formatList(matches));
+```
+
+`searchBooks` takes two parameters, the books to search and the search term, and returns the matches.
+Because our arrow function is written inside `searchBooks`, it can use the `query` parameter.
+A separate `isMatch` function outside could not.
+
+```bash {linenos=false}
+deno main.js
+```
+
+```plaintext {linenos=false}
+The Hobbit
+by J.R.R. Tolkien (1937)
+------------------------------
+The Hobbit: Graphic Novel
+by Chuck Dixon, J.R.R. Tolkien (1989)
+------------------------------
+The History of the Hobbit, Part One: Mr. Baggins
+by John D. Rateliff, J.R.R. Tolkien (2007)
+```
+
+## Search by author {#logical-or}
+
+Change the query to `"Orwell"`.
+There are no matches, because Orwell is in the author, not the title.
+Update `searchBooks` so it checks both.
+
+**main.js**
+```JavaScript{hl_lines="14-15 19"}
+import books from "./data/books.json" with { type: "json" };
+
+function formatBook(book) {
+    const { title, author, year } = book;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
+}
+
+function formatList(books) {
+    return books.map(formatBook).join("\n------------------------------\n");
+}
+
+function searchBooks(books, query) {
+    return books.filter((book) => {
+        return book.title.includes(query) ||
+            book.author.includes(query);
+    });
+}
+
+const query = "Orwell";
+const matches = searchBooks(books, query);
+console.log(formatList(matches));
+```
+
+The [`||`][logical or] means a book matches if *either* field contains the query.
+
+```bash {linenos=false}
+deno main.js
+```
+
+```plaintext {linenos=false}
+1984
+by George Orwell (1949)
+------------------------------
+Animal Farm
+by George Orwell (1945)
+------------------------------
+Animal Farm / 1984
+by George Orwell (1950)
+```
+
+## Ignore capitals {#lower-case}
+
+Change the query to `"orwell"`.
+There are no matches again, because `includes` cares about capital letters.
+Nobody wants to remember how to capitalise a search.
+
+**main.js**
+```JavaScript{hl_lines="13 15-16 20"}
+import books from "./data/books.json" with { type: "json" };
+
+function formatBook(book) {
+    const { title, author, year } = book;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
+}
+
+function formatList(books) {
+    return books.map(formatBook).join("\n------------------------------\n");
+}
+
+function searchBooks(books, query) {
+    const q = query.toLowerCase();
+    return books.filter((book) => {
+        return book.title.toLowerCase().includes(q) ||
+            book.author.toLowerCase().includes(q);
+    });
+}
+
+const query = "orwell";
+const matches = searchBooks(books, query);
+console.log(formatList(matches));
+```
+
+[`toLowerCase`][to lower case] gives us a lower case copy of a string.
+We compare in lower case so that `"Orwell"` and `"orwell"` match the same books.
+We only need to lower the query once, so we keep it in `q`.
+
+```bash {linenos=false}
+deno main.js
+```
+
+```plaintext {linenos=false}
+1984
+by George Orwell (1949)
+------------------------------
+Animal Farm
+by George Orwell (1945)
+------------------------------
+Animal Farm / 1984
+by George Orwell (1950)
+```
+
+## No matches {#no-matches}
+
+Change the query to `"xyzzy"`.
+Nothing matches, so `filter` gives us an empty array and our programme prints an empty line.
+That looks like a mistake.
+
+**main.js**
+```JavaScript{hl_lines="9 21"}
 import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
@@ -40,13 +285,145 @@ function formatList(books) {
     return books.map(formatBook).join("\n------------------------------\n");
 }
 
-const query = Deno.args[0] ?? prompt("Search for a book:") ?? "";
-console.log(`Searching for "${query}" in ${books.length} books.`);
+function searchBooks(books, query) {
+    const q = query.toLowerCase();
+    return books.filter((book) => {
+        return book.title.toLowerCase().includes(q) ||
+            book.author.toLowerCase().includes(q);
+    });
+}
+
+const query = "xyzzy";
+const matches = searchBooks(books, query);
+console.log(formatList(matches));
 ```
 
-[`Deno.args`][deno args] is an array of the command-line arguments after the script name.
-[`prompt`][prompt] asks a question in the terminal and waits for an answer.
-If the user cancels, `prompt` returns `null`, so we fall back to an empty string with `??`.
+An [`if`][if else] statement only runs its code when the condition is `true`.
+The [`===`][strict equality] checks that `books.length` is exactly `0`.
+When it is, `formatList` returns early, and the rest of the function doesn't run.
+
+```bash {linenos=false}
+deno main.js
+```
+
+```plaintext {linenos=false}
+No books match.
+```
+
+## A search report {#report}
+
+Change the query to `"king"`.
+That gives a long list, so let's only show the first five matches, with a heading.
+
+**main.js**
+```JavaScript{hl_lines="21 24-31"}
+import books from "./data/books.json" with { type: "json" };
+
+function formatBook(book) {
+    const { title, author, year } = book;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
+}
+
+function formatList(books) {
+    if (books.length === 0) return "No books match.";
+    return books.map(formatBook).join("\n------------------------------\n");
+}
+
+function searchBooks(books, query) {
+    const q = query.toLowerCase();
+    return books.filter((book) => {
+        return book.title.toLowerCase().includes(q) ||
+            book.author.toLowerCase().includes(q);
+    });
+}
+
+const query = "king";
+const matches = searchBooks(books, query);
+
+console.log(`\n==============================`);
+console.log(`Search: "${query}" (${matches.length} matches)`);
+console.log(`==============================`);
+console.log(formatList(matches.slice(0, 5)));
+if (matches.length > 5) {
+    console.log(`\n…and ${matches.length - 5} more.`);
+}
+console.log(`==============================`);
+```
+
+Everything here is something we have seen before.
+We use template literals to print the heading, and `slice` to show only the first five matches, so a busy terminal stays readable.
+This `if` uses braces, which can hold as many lines as we like.
+The short form we used in `formatList` only holds a single statement.
+
+```bash {linenos=false}
+deno main.js
+```
+
+```plaintext {linenos=false}
+
+==============================
+Search: "king" (58 matches)
+==============================
+To Kill a Mockingbird
+by Harper Lee (1960)
+------------------------------
+Mockingjay
+by Suzanne Collins (2010)
+------------------------------
+Breaking Dawn
+by Stephenie Meyer (2008)
+------------------------------
+The Shining
+by Stephen King (1977)
+------------------------------
+Looking for Alaska
+by John Green (2005)
+
+…and 53 more.
+==============================
+```
+
+## A search term from the command line {#deno-args}
+
+To search for something else we still have to edit our code.
+It would be better to give the search term when we run the programme.
+
+**main.js**
+```JavaScript{hl_lines="21"}
+import books from "./data/books.json" with { type: "json" };
+
+function formatBook(book) {
+    const { title, author, year } = book;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
+}
+
+function formatList(books) {
+    if (books.length === 0) return "No books match.";
+    return books.map(formatBook).join("\n------------------------------\n");
+}
+
+function searchBooks(books, query) {
+    const q = query.toLowerCase();
+    return books.filter((book) => {
+        return book.title.toLowerCase().includes(q) ||
+            book.author.toLowerCase().includes(q);
+    });
+}
+
+const query = Deno.args[0];
+const matches = searchBooks(books, query);
+
+console.log(`\n==============================`);
+console.log(`Search: "${query}" (${matches.length} matches)`);
+console.log(`==============================`);
+console.log(formatList(matches.slice(0, 5)));
+if (matches.length > 5) {
+    console.log(`\n…and ${matches.length - 5} more.`);
+}
+console.log(`==============================`);
+```
+
+[`Deno.args`][deno args] is an array of the command-line arguments after the script name, so `Deno.args[0]` is the first one.
 
 Run it with an argument.
 
@@ -54,27 +431,29 @@ Run it with an argument.
 deno main.js king
 ```
 
-```plaintext {linenos=false}
-Searching for "king" in 1000 books.
-```
+You should see the same report as before.
+Try `deno main.js xyzzy` too; you should see **No books match.**
 
-Run it with no argument, and type a word when asked.
+Now run it with no argument.
 
 ```bash {linenos=false}
 deno main.js
 ```
 
 ```plaintext {linenos=false}
-Search for a book: potter
-Searching for "potter" in 1000 books.
+error: Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    const q = query.toLowerCase();
+                    ^
 ```
 
-## Filter the books {#filter}
+There is no first argument, so `Deno.args[0]` is `undefined`, and `undefined` has no `toLowerCase`.
 
-Add a `searchBooks` function and print the matches.
+## Ask for a search term {#prompt}
+
+When there is no argument, let's ask for a search term instead.
 
 **main.js**
-```JavaScript{hl_lines="13-19 22 24-31"}
+```JavaScript{hl_lines="21"}
 import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
@@ -108,44 +487,27 @@ if (matches.length > 5) {
 console.log(`==============================`);
 ```
 
-[`filter`][array filter] keeps the books for which our function returns `true`.
-We compare in lower case so that `"King"` and `"king"` match the same books.
-[`includes`][includes] is true when the query appears anywhere in the title or author.
-The [`||`][logical or] means a book matches if *either* field contains the query.
+We met `??` when we [handled missing years][missing years].
+If `Deno.args[0]` is `undefined`, we use the answer from [`prompt`][prompt] instead.
+`prompt` asks a question in the terminal and waits for an answer.
+If the user cancels, `prompt` returns `null`, so we fall back to an empty string with a second `??`.
+
+Run it with no argument, and type a word when asked.
 
 ```bash {linenos=false}
-deno main.js king
+deno main.js
 ```
 
 ```plaintext {linenos=false}
+Search for a book: potter
 
 ==============================
-Search: "king" (58 matches)
+Search: "potter" (10 matches)
 ==============================
-To Kill a Mockingbird
-by Harper Lee (1960)
-------------------------------
-Mockingjay
-by Suzanne Collins (2010)
-------------------------------
-Breaking Dawn
-by Stephenie Meyer (2008)
-------------------------------
-The Shining
-by Stephen King (1977)
-------------------------------
-Looking for Alaska
-by John Green (2005)
-
-…and 53 more.
-==============================
+…
 ```
 
-We only show the first five matches, so a busy terminal stays readable.
-Try `deno main.js xyzzy` too; you should see **No books match.**
-
-> The function we pass to `filter` is an [*arrow function*][arrow functions].
-> For a single expression you can drop the braces and the `return`, but the longer form is easier to read while we are learning.
+Running it with an argument still works as before.
 
 ## Split into modules {#modules}
 
@@ -258,12 +620,16 @@ The same split between data (models), presentation (views), and the overall logi
 > The next unit starts a web server, and we will meet **books.json** again there.
 
 [previous exercise]: javascript-fundamentals/books-data/
-[deno args]: https://docs.deno.com/api/deno/~/Deno.args
-[prompt]: https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt
 [array filter]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
 [includes]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/includes
-[logical or]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_OR
 [arrow functions]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
+[logical or]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_OR
+[to lower case]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLowerCase
+[if else]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else
+[strict equality]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality
+[deno args]: https://docs.deno.com/api/deno/~/Deno.args
+[missing years]: javascript-fundamentals/books-data/#missing-year
+[prompt]: https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt
 [modules]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules
 [export]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export
 [mvc glossary]: https://developer.mozilla.org/en-US/docs/Glossary/MVC
