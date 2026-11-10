@@ -21,7 +21,7 @@ In this exercise we will add the other 980, and make our books page cope with th
 By the end of this exercise you should be able to:
 
 - Show a default value when some data are missing
-- Fetch one page of rows from the database with `LIMIT` and `OFFSET`
+- Fetch one page of rows from the database with `ORDER BY`, `LIMIT` and `OFFSET`
 - Turn a value from the query string into a number, and check that it is a whole number
 - Count rows with `count(*)`, and work out how many pages there are
 - Build a query string with `URLSearchParams`, so that our page links keep the search
@@ -63,8 +63,11 @@ Task db:seed deno -A tasks/db-seed.js
 ```
 
 Open [http://localhost:8000/books][books] with the developer tools (**F12**) open on the **network** panel.
-It takes a moment.
-The page is over 300 kB of HTML, with 1,000 cards, and the scroll bar is tiny.
+Our server is still quick: it sends the page in a few milliseconds.
+The covers have [`loading="lazy"`][lazy loading], so the browser only fetches the ones we scroll to.
+But the page is over 300 kB of HTML, with 1,000 cards, and the scroll bar is tiny.
+Nobody is going to scroll through 1,000 books, and every visit sends all of them, whatever our users actually look at.
+With more books it would only get longer.
 
 Scroll down to **Memoirs of a Geisha**, the 36th book.
 Its card has no cover, just an empty space.
@@ -84,7 +87,7 @@ The first match is book 267, **Twilight: The Complete Illustrated Movie Companio
 This is the book with no year that we met in the [book search][missing year].
 Its `year` is `null` too, so all we see is an empty pair of brackets.
 
-We will fix both of these, then split the list into pages.
+We will fix both of these first, then split that long page into pages.
 
 ## A default cover {#default-cover}
 
@@ -161,8 +164,8 @@ The card now says just **Mark Cotta Vaz**.
 
 ## One page at a time {#limit-offset}
 
-Even with every card fixed, 1,000 books is far too many for one page.
-Instead, we will show 16 at a time.
+Every card looks right now, but the page is still 1,000 books long.
+Instead, we will show 16 at a time, with links to move between them.
 
 ### Which page? {#page-number}
 
@@ -212,7 +215,7 @@ Refresh [http://localhost:8000/books?page=2][page 2], and you should still see a
 Now update the model in **server/models/books.js**, so that `searchBooks` returns only one page of books.
 
 **server/models/books.js**
-```JavaScript{hl_lines="11 15-16"}
+```JavaScript{hl_lines="11 15-17"}
 import { db } from "./db.js";
 
 export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
@@ -227,6 +230,7 @@ export function searchBooks(q, page, pageSize) {
     return db.prepare(`
         SELECT id, title, author, year, thumbnailUrl, coverUrl FROM books
         WHERE title LIKE :pattern OR author LIKE :pattern
+        ORDER BY title
         LIMIT :limit OFFSET :offset
     `).all({ pattern: `%${q}%`, limit: pageSize, offset: (page - 1) * pageSize });
 }
@@ -236,14 +240,24 @@ export function searchBooks(q, page, pageSize) {
 
 `searchBooks` now takes the page number and the page size, as well as the search.
 
+[`ORDER BY`][order by] sorts the results, here by `title`.
+Without it, we have never said what order we want, so SQLite is free to return the rows in any order it likes.
+So far they have come back in the order we added them, but nothing promises that.
+
 [`LIMIT` and `OFFSET`][limit offset] ask the database for part of the results.
 `OFFSET` skips some rows, and `LIMIT` says how many to return after that.
 Page 1 skips none and returns the first 16, page 2 skips 16 and returns the next 16, and so on.
 `:limit` and `:offset` are [named parameters][named parameters], just like `:pattern`.
 
+> Paging needs a stable order.
+> Each page is a separate query, and the database only skips rows by counting them.
+> If the order could change between two queries, a book could appear on two pages, or on none.
+> `ORDER BY title` gives every query the same order.
+
 Refresh [http://localhost:8000/books][books].
 There are 16 books, and the page is a fraction of the size.
-Now try [http://localhost:8000/books?page=2][page 2], and you get a different 16.
+They are in order of title now, starting with **'Salem's Lot**, **11/22/63** and **1776**.
+Now try [http://localhost:8000/books?page=2][page 2], and you get the next 16, from **A Court of Thorns and Roses** to **A Monster Calls**.
 
 Searches are paged too.
 [http://localhost:8000/books?q=the][q the] shows the first 16 books with **the** in the title or author, and [http://localhost:8000/books?q=the&page=2][q the page 2] shows the next 16.
@@ -267,7 +281,7 @@ The view needs to know how many pages there are, which means we need to know how
 Add `countBooks` and `countPages` functions to the end of **server/models/books.js**.
 
 **server/models/books.js**
-```JavaScript{hl_lines="19-23 26-28"}
+```JavaScript{hl_lines="20-24 27-29"}
 import { db } from "./db.js";
 
 export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
@@ -282,6 +296,7 @@ export function searchBooks(q, page, pageSize) {
     return db.prepare(`
         SELECT id, title, author, year, thumbnailUrl, coverUrl FROM books
         WHERE title LIKE :pattern OR author LIKE :pattern
+        ORDER BY title
         LIMIT :limit OFFSET :offset
     `).all({ pattern: `%${q}%`, limit: pageSize, offset: (page - 1) * pageSize });
 }
@@ -399,7 +414,7 @@ View the page source (**Ctrl+U**) on [http://localhost:8000/books?page=2][page 2
         </nav>
 ```
 
-The last page, [http://localhost:8000/books?page=63][page 63], has 8 books, says **page 63 of 63** and has no **next** link.
+The last page, [http://localhost:8000/books?page=63][page 63], has 8 books, from **Wonder** to **Zen and the Art of Motorcycle Maintenance**, says **page 63 of 63** and has no **next** link.
 
 > Notice that the server now tells the browser where it can go next, with links in the page.
 > This idea is part of [HATEOAS][hateoas], and we will come back to it.
@@ -566,7 +581,7 @@ A search has its own number of pages, so [http://localhost:8000/books?q=of+the&p
 We seeded all 1,000 books, and found some with no cover or no year.
 `bookCard` now uses a default cover, and leaves out a missing year.
 
-The books controller reads the page number from the query string, and asks the model for one page of books with `LIMIT` and `OFFSET`, and for the number of pages.
+The books controller reads the page number from the query string, and asks the model for one page of books with `LIMIT` and `OFFSET`, in a stable order with `ORDER BY`, and for the number of pages.
 The view links to the previous and next pages, and `pageUrl` uses `URLSearchParams` to keep the search in each link.
 A page that doesn't exist throws a `NotFoundError`, so it gets our not-found page.
 
@@ -644,7 +659,9 @@ These are questions to investigate, not changes to keep.
 [number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/Number
 [is safe integer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isSafeInteger
 [let]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let
+[order by]: https://www.sqlite.org/lang_select.html#orderby
 [limit offset]: https://www.sqlite.org/lang_select.html#limitoffset
+[lazy loading]: sqlite-and-models/books-page/#lazy-loading
 [named parameters]: user-input-and-security/search/#like
 [q the]: http://localhost:8000/books?q=the
 [q the page 2]: http://localhost:8000/books?q=the&page=2
