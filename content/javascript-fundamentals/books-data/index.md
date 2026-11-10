@@ -105,7 +105,7 @@ Let's write a function that turns a book into a short description.
 Update **main.js**.
 
 **main.js**
-```JavaScript{hl_lines="3-8 10-11"}
+```JavaScript{hl_lines=["3-6", "8-9"]}
 import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
@@ -123,7 +123,7 @@ The [template literal][template literals] (backticks) defines the output string 
 
 > Notice we include a newline character `\n` in the template.
 > In fact, template literals can be split over multiple lines like this.
-> ```js
+> ```JavaScript {hl_lines="3-4"}
 > function formatBook(book) {
 >     const { title, author, year } = book;
 >     return `${title}
@@ -154,7 +154,7 @@ We want several books, with a line between them.
 Add a `formatList` function and use it for the first three books.
 
 **main.js**
-```JavaScript{hl_lines="9-11 13-16"}
+```JavaScript{hl_lines="8-10 12-15"}
 import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
@@ -207,7 +207,7 @@ Book 267 in our list is one of them.
 Update `formatBook` so that a missing year becomes `"unknown"`, then print that book.
 
 **main.js**
-```JavaScript{hl_lines="4-5"}
+```JavaScript{hl_lines="5"}
 import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
