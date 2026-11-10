@@ -68,7 +68,6 @@ Look at what it does.
 
 - Every page needs another `if`, and they all look almost the same.
 - The handler has two jobs: it sets up the request (`url`, `ctx` and the log line), and it decides which controller to call.
-- It only checks the path, so a `POST` request to `/` gets the home page, just like a `GET`.
 
 This unit is about paying off [technical debt][technical debt].
 In this exercise we will pay off the `if` chain.
@@ -213,7 +212,7 @@ export class Router {
 [`find`][array find] is like the [`filter`][filter] we used in the book search, but it gives us the first matching item rather than an array of them.
 The [arrow function][arrow functions] we pass to it checks two things.
 
-- `route.method === request.method` checks the HTTP method, such as `GET` or `POST`.
+- `route.method === request.method` checks the HTTP method; every page we visit is a `GET` request.
 - [`route.pattern.test(url)`][urlpattern test] is `true` when the URL matches the route's pattern.
 
 The [`&&`][logical and] between them means a route only matches when *both* are `true`.
@@ -264,17 +263,6 @@ Check our pages.
 - [http://localhost:8000/][localhost] is `200 OK`, with its title.
 - [http://localhost:8000/books][books] is `200 OK`, with the books and their covers, so our static files work too.
 - [http://localhost:8000/nope][nope] is `404 Not Found`.
-
-### Checking the method {#method}
-
-Our router checks the method as well as the path.
-Every request we have sent so far is a `GET`, because visiting a URL in the address bar always sends a `GET` request.
-The terminal shows this: each request is logged with its method, `GET`, before its path.
-You can also see it in the **network** panel: select the request for `/books` and look at its headers.
-
-Before the router, a request with any other [method][http methods] for `/` would have been `200 OK`, because the `if` chain only looked at the path.
-Now it would be `404 Not Found`, because we have only registered `GET` routes.
-We will see this for real when we start sending `POST` requests.
 
 ### Why is this better? {#better}
 
@@ -354,7 +342,6 @@ export function server(request) {
 ```
 
 Each route is now shorter, and reads almost like a sentence: get `/books` with the books controller.
-Later, we can add a `post` method in the same way.
 
 Refresh [http://localhost:8000/books][books] to check that nothing has changed.
 
@@ -505,7 +492,7 @@ Our routes are now a list, kept in a `Router` object, our first class.
 The router matches the method as well as the path, with `URLPattern`, and a `get` method makes routes short to write.
 When nothing matches, the router throws a `NotFoundError`, and **server/main.js** catches it and shows the not-found page.
 
-Our users wouldn't notice any of this, except that a `POST` to `/` is now a `404`.
+Our users wouldn't notice any of this.
 But adding a page is now one line in **server/main.js**.
 
 Our project now looks like this.
@@ -583,7 +570,6 @@ In the next exercise we will give every controller, view and the layout the same
 [nullish coalescing]: javascript-fundamentals/books-data/#missing-year
 [localhost]: http://localhost:8000/
 [nope]: http://localhost:8000/nope
-[http methods]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods
 [rest parameters]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
 [spread syntax]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
 [error]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
