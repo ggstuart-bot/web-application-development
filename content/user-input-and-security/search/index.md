@@ -457,6 +457,8 @@ export function homeView() {
 Visit [http://localhost:8000/][localhost] and search for **orwell**.
 The form's `action` sends us to the books page, `/books?q=orwell`, with George Orwell's two books.
 
+{{<figure src="images/search-home.webp" alt="The Bookshelves home page, with the heading Welcome to Bookshelves, a Find a book heading, and an empty search form labelled Search by title or author" caption="The home page now has the same search form.">}}
+
 ## Styling the form {#styles}
 
 Finally, let's make the form match the rest of our site.
@@ -520,6 +522,8 @@ search > form {
 - `min-width: 0` lets the box shrink on a narrow screen, rather than pushing the button off the edge.
 
 Refresh [http://localhost:8000/books?q=tolkien][q tolkien] to see the finished search.
+
+{{<figure src="images/search-results.webp" alt="The books page after a search for tolkien, with the heading Books matching “tolkien”, a show all books link, the search form with tolkien in the box, and two book cards for The Hobbit and The Fellowship of the Ring" caption="A search for tolkien shows the two matching books, with the query kept in the form.">}}
 
 ## Something to fix {#quotes}
 
