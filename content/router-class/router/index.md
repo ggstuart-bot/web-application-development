@@ -121,6 +121,7 @@ Every object made from the same class has the same *properties* (values) and *me
 - `register` is a [method][methods], a function that belongs to the object. It adds one route to `this.routes`.
 
 Each route is a small object with three properties: the method, a pattern for the path, and the handler.
+[`push`][array push] adds it to the end of the array.
 
 [`URLPattern`][urlpattern] is built into deno, and into modern browsers.
 It describes the paths a route should match.
@@ -215,7 +216,10 @@ The [arrow function][arrow functions] we pass to it checks two things.
 - `route.method === request.method` checks the HTTP method, such as `GET` or `POST`.
 - [`route.pattern.test(url)`][urlpattern test] is `true` when the URL matches the route's pattern.
 
+The [`&&`][logical and] between them means a route only matches when *both* are `true`.
+
 If no route matches, `find` gives us `undefined`.
+[`!`][logical not] means *not*, so `!route` is `true` when there is no route.
 Our `return;` then returns `undefined` too, which tells the caller we couldn't help.
 Otherwise we call the route's handler with `ctx`, and return the `Response` it gives us.
 
@@ -570,6 +574,7 @@ In the next exercise we will give every controller, view and the layout the same
 [constructor]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/constructor
 [this]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this
 [methods]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Method_definitions
+[array push]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push
 [urlpattern]: https://developer.mozilla.org/en-US/docs/Web/API/URLPattern
 [new]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new
 [first-class function]: views-and-controllers/controllers/#view-functions
@@ -578,6 +583,8 @@ In the next exercise we will give every controller, view and the layout the same
 [filter]: javascript-fundamentals/book-search/#filter
 [arrow functions]: javascript-fundamentals/book-search/#arrow-functions
 [urlpattern test]: https://developer.mozilla.org/en-US/docs/Web/API/URLPattern/test
+[logical and]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_AND
+[logical not]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Logical_NOT
 [nullish coalescing]: javascript-fundamentals/books-data/#missing-year
 [localhost]: http://localhost:8000/
 [nope]: http://localhost:8000/nope
