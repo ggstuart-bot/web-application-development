@@ -642,6 +642,32 @@ These are questions to investigate, not changes to keep.
 - Visit [http://localhost:8000/books?q=zebra][q zebra]. How many pages does it have, and what would happen without `Math.max`?
 - Change `PAGE_SIZE` to 5. How many pages are there now? Work it out first, then check.
 
+<details>
+<summary>A stricter page number</summary>
+
+`Number` is very forgiving.
+`Number("1.0")` is `1`, and so are `Number(" 1 ")` and `Number("01")`.
+`Number("0x2")` is `2`, because `0x` starts a hexadecimal number.
+
+One way to be strict is to turn the number back into a string and check that it matches what the user sent.
+`String(1)` is `"1"`, which is not the same as `"1.0"`.
+
+**server/controllers/books.js**
+
+```js
+    if (
+        !Number.isSafeInteger(page) || page < 1 || page > pageCount ||
+        (pageParam !== null && String(page) !== pageParam)
+    ) {
+```
+
+Now `1.0`, `0x2`, `" 2 "` and `02` are all rejected with a 404.
+The `pageParam !== null` part matters: without a `page` in the query string, `pageParam` is `null`, and `String(1)` is never equal to `null`, so every visit to [/books][books] would be a 404.
+
+A [regular expression][regex] such as `/^[1-9]\d*$/` would also work, but that is a new idea for another day.
+
+</details>
+
 > If you tried any changes, undo them, so that your code matches the starting point of the next exercise.
 
 [previous exercise]: user-input-and-security/escaping/
@@ -693,3 +719,4 @@ These are questions to investigate, not changes to keep.
 [page 0x2]: http://localhost:8000/books?page=0x2
 [page spaces]: http://localhost:8000/books?page=%202%20
 [q zebra]: http://localhost:8000/books?q=zebra
+[regex]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions
