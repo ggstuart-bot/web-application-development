@@ -27,13 +27,12 @@ By the end of this exercise you should be able to:
 Update **main.js** so that the search term comes from outside the file.
 
 **main.js**
-```JavaScript
+```JavaScript{hl_lines="9 13-14"}
 import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
     const { title, author, year } = book;
-    return `${title}
-by ${author} (${year ?? "unknown"})`;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
 }
 
 function formatList(books) {
@@ -75,13 +74,12 @@ Searching for "potter" in 1000 books.
 Add a `searchBooks` function and print the matches.
 
 **main.js**
-```JavaScript{hl_lines="15-20 24-29"}
+```JavaScript{hl_lines="13-19 22 24-31"}
 import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
     const { title, author, year } = book;
-    return `${title}
-by ${author} (${year ?? "unknown"})`;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
 }
 
 function formatList(books) {
@@ -178,8 +176,7 @@ export function searchBooks(books, query) {
 ```JavaScript
 export function formatBook(book) {
     const { title, author, year } = book;
-    return `${title}
-by ${author} (${year ?? "unknown"})`;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
 }
 
 export function formatList(books) {
@@ -230,7 +227,7 @@ my-app/
 └── search.js
 ```
 
-### Data, logic, output — and MVC {#mvc}
+### Data, output and logic {#mvc}
 
 Look at what each file is responsible for.
 
@@ -245,9 +242,10 @@ The habit to take forward is already here: give each file one job, and connect t
 
 ## Conclusion
 
-We can search a thousand books from the command line, and our code is split into modules with clear jobs.
+We have created a simple programme that allows us to search a thousand books from the command line.
+Our code is split into functions with clear jobs and we have divided our functions into modules so the codebase can be easily grown.
 `data.js` holds the books, `search.js` filters them, `format.js` turns them into text, and `main.js` runs the programme.
-The same split — data, presentation, and control — will come back as model, view and controller on the server.
+The same split between data (models), presentation (views), and the overall logic of performing a task (controllers) is an extremely common architecture for web servers.
 
 ## Challenge: Stretch the search
 
