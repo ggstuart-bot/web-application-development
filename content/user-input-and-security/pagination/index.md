@@ -72,6 +72,8 @@ With more books it would only get longer.
 Scroll down to **Memoirs of a Geisha**, the 36th book.
 Its card has no cover, just an empty space.
 
+{{<figure src="images/missing-cover.webp" alt="The books page scrolled down to Memoirs of a Geisha. Its card, and the Little Women card below it, show only a broken image icon where the cover should be" caption="Memoirs of a Geisha has no cover.">}}
+
 We noted when we [added covers][covers] that some books in **books.json** have no cover, so their `coverUrl` is `null`.
 None of our first 20 books were like that, but 181 of the others are.
 View the page source (**Ctrl+U**) and find **Memoirs of a Geisha**.
@@ -128,6 +130,8 @@ Otherwise, `cover` is `book.coverUrl`.
 
 Refresh [http://localhost:8000/books][books].
 **Memoirs of a Geisha** and **Little Women** now have our default cover.
+
+{{<figure src="images/default-cover.webp" alt="The same part of the books page, where Memoirs of a Geisha and Little Women now show a grey book icon as their cover" caption="Books without a cover now get the default one.">}}
 
 ## A missing year {#missing-year}
 
@@ -404,6 +408,10 @@ Below the books are **page 1 of 63** and **next**.
 Our `nav` rules in **public/styles.css** already style them like the [header links][nav styles]: a centred row of pills, with the current page filled in.
 Click **next** twice, then **previous**.
 
+{{<figure src="images/books-page-1.webp" alt="The bottom of the first page of books, with page 1 of 63 filled in and a next link below the last card" caption="The first page ends with links to the other pages.">}}
+
+{{<figure src="images/books-page-2.webp" alt="The bottom of the second page of books, with previous, page 2 of 63 and next links" caption="Page 2 has a link back to page 1.">}}
+
 View the page source (**Ctrl+U**) on [http://localhost:8000/books?page=2][page 2] and find the links.
 
 ```html {linenos=false}
@@ -497,6 +505,10 @@ q=of+the&page=2
 Visit [http://localhost:8000/books?q=of+the][q of the] and click **next**.
 The address bar says `/books?q=of+the&page=2`, and we are on **page 2 of 3** of the search.
 
+{{<figure src="images/search-page-2.webp" alt="The second page of results for the search of the, with the search in the address bar, the heading Books matching “of the” and the search box" caption="The search is kept on page 2.">}}
+
+{{<figure src="images/search-page-2-links.webp" alt="The bottom of the second page of search results, with previous, page 2 of 3 and next links, and the search still in the address bar" caption="The page links keep the search too.">}}
+
 View the page source and find the links.
 
 ```html {linenos=false}
@@ -516,6 +528,8 @@ That is exactly what we want: the browser reads `&amp;` in an attribute as `&`, 
 
 Click [http://localhost:8000/books?page=100][page 100].
 There are no books, a **previous** link, and **page 100 of 63**.
+
+{{<figure src="images/page-past-end.webp" alt="The books page for page 100, showing No books found, a previous link and page 100 of 63" caption="Page 100 of 63 shouldn’t exist.">}}
 And [http://localhost:8000/books?page=abc][page abc] quietly gives us page 1.
 
 Neither page exists.
@@ -562,6 +576,8 @@ The error leaves `booksController` straight away, passes back through `withLogs`
 
 Click [http://localhost:8000/books?page=100][page 100] again.
 It is `404 Not Found`, with our not-found page, and the terminal says why.
+
+{{<figure src="images/page-not-found.webp" alt="The not-found page, shown for page 100 of the books" caption="Page 100 is now not found.">}}
 
 ```plaintext {linenos=false}
 
