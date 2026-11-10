@@ -1,7 +1,7 @@
 ---
 type: unit
 title: Deno server
-weight: 103
+weight: 150
 ---
 
 In this unit we will set up a deno project with a clean folder structure and build a simple HTTP server that serves two interlinked HTML pages.

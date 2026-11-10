@@ -595,12 +595,12 @@ Finally, something to think about.
 Our request handler still has an `if` for each page, and repeats the same `headers` line for each one.
 What would **server/main.js** look like with twenty pages?
 
-[previous exercise]: deno-server/missing-pages/
+[previous exercise]: http-servers/missing-pages/
 [localhost]: http://localhost:8000/
 [books]: http://localhost:8000/books
 [hello world upgrade]: welcome/hello-world/#upgrading-the-website
 [export]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export
-[server task]: deno-server/deno-serve/#the-server-task
+[server task]: http-servers/deno-serve/#the-server-task
 [refactoring]: https://en.wikipedia.org/wiki/Code_refactoring
 [mvc]: https://developer.mozilla.org/en-US/docs/Glossary/MVC
 [mvc wikipedia]: https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller
@@ -609,5 +609,5 @@ What would **server/main.js** look like with twenty pages?
 [custom properties]: https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Cascading_variables/Using_custom_properties
 [prefers-color-scheme]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-color-scheme
 [filter]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/filter
-[about challenge]: deno-server/missing-pages/#about-challenge
+[about challenge]: http-servers/missing-pages/#about-challenge
 [about]: http://localhost:8000/about

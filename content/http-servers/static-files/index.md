@@ -532,9 +532,9 @@ Visit [http://localhost:8000/deno.json][deno.json path] once more.
 We get our home page, with a `200 OK` status.
 Is that really the right response for a path that doesn't exist?
 
-[previous exercise]: deno-server/deno-serve/
+[previous exercise]: http-servers/deno-serve/
 [localhost]: http://localhost:8000/
-[request logging]: deno-server/deno-serve/#request-logging
+[request logging]: http-servers/deno-serve/#request-logging
 [url constructor]: https://developer.mozilla.org/en-US/docs/Web/API/URL/URL
 [url pathname]: https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname
 [favicon.ico]: http://localhost:8000/favicon.ico

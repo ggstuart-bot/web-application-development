@@ -681,17 +681,17 @@ Finally, something to think about.
 Every page needs another `if` in **server/main.js**, and they all look the same.
 How could we describe our routes as data, rather than as code?
 
-[previous exercise]: deno-server/views/
+[previous exercise]: views-and-controllers/views/
 [localhost]: http://localhost:8000/
 [nope]: http://localhost:8000/nope
 [technical debt]: https://en.wikipedia.org/wiki/Technical_debt
-[refactoring]: deno-server/views/#refactoring
+[refactoring]: views-and-controllers/views/#refactoring
 [default parameters]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters
 [title element]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/title
 [conditional operator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator
 [destructuring]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
 [first-class function]: https://developer.mozilla.org/en-US/docs/Glossary/First-class_Function
 [not a function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Not_a_function
-[mvc]: deno-server/views/#mvc
-[about challenge]: deno-server/missing-pages/#about-challenge
+[mvc]: views-and-controllers/views/#mvc
+[about challenge]: http-servers/missing-pages/#about-challenge
 [about]: http://localhost:8000/about

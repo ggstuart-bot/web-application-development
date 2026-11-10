@@ -701,4 +701,4 @@ Our server simply returns an HTML response for these requests stating that the f
 [http://localhost:8000/missing]: http://localhost:8000/missing
 [destructuring]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring
 
-[previous exercise]: javascript-fundamentals/a-simple-web-server/
+[previous exercise]: http-servers/a-simple-web-server/

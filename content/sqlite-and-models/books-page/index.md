@@ -703,28 +703,28 @@ Finally, something to think about.
 Our books page shows every book in the database.
 What would happen with all 1,000?
 
-[previous exercise]: deno-server/database/
+[previous exercise]: sqlite-and-models/database/
 [localhost]: http://localhost:8000/
-[controllers]: deno-server/controllers/#controllers
+[controllers]: views-and-controllers/controllers/#controllers
 [books]: http://localhost:8000/books
-[ctx]: deno-server/controllers/#ctx
+[ctx]: views-and-controllers/controllers/#ctx
 [nope]: http://localhost:8000/nope
-[technical debt]: deno-server/controllers/#technical-debt
-[mvc]: deno-server/database/#mvc
-[options]: deno-server/controllers/#options
-[destructuring]: deno-server/controllers/#title
+[technical debt]: views-and-controllers/controllers/#technical-debt
+[mvc]: sqlite-and-models/database/#mvc
+[options]: views-and-controllers/controllers/#options
+[destructuring]: views-and-controllers/controllers/#title
 [array map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
 [array join]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join
-[get books]: deno-server/database/#get-books
-[first-class function]: deno-server/controllers/#view-functions
-[styles]: deno-server/views/#styles
+[get books]: sqlite-and-models/database/#get-books
+[first-class function]: views-and-controllers/controllers/#view-functions
+[styles]: views-and-controllers/views/#styles
 [grid-template-columns]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/grid-template-columns
 [repeat]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/repeat
 [minmax]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/minmax
 [last-child]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/:last-child
 [img]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img
 [lazy loading]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img#loading
-[lazy demo]: deno-server/books-page/#lazy-loading
+[lazy demo]: sqlite-and-models/books-page/#lazy-loading
 [aspect-ratio]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/aspect-ratio
 [object-fit]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-fit
 [overflow-wrap]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/overflow-wrap
