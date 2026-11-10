@@ -495,22 +495,22 @@ Finally, something to think about.
 Our `books` task is the only thing that can see the books.
 What would a controller and a view for the books page need to do?
 
-[previous exercise]: deno-server/controllers/
+[previous exercise]: views-and-controllers/controllers/
 [goodbooks]: https://github.com/zygmuntz/goodbooks-10k
 [cc by-sa]: https://creativecommons.org/licenses/by-sa/4.0/
 [sqlite]: https://www.sqlite.org/
 [db sqlite]: https://jsr.io/@db/sqlite
-[jsr imports]: deno-server/static-files/#jsr-imports
+[jsr imports]: http-servers/static-files/#jsr-imports
 [gitignore]: https://git-scm.com/docs/gitignore
 [create table]: https://www.sqlite.org/lang_createtable.html
 [ffi]: https://docs.deno.com/runtime/fundamentals/ffi/
-[permissions]: deno-server/deno-serve/#permissions
-[destructuring]: deno-server/controllers/#title
+[permissions]: http-servers/deno-serve/#permissions
+[destructuring]: views-and-controllers/controllers/#title
 [prepared statement]: https://en.wikipedia.org/wiki/Prepared_statement
 [sql injection]: https://en.wikipedia.org/wiki/SQL_injection
 [returning]: https://www.sqlite.org/lang_returning.html
-[mvc views]: deno-server/views/#mvc
-[mvc controllers]: deno-server/controllers/#mvc
+[mvc views]: views-and-controllers/views/#mvc
+[mvc controllers]: views-and-controllers/controllers/#mvc
 [import attributes]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import/with
 [for of]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of
 [select]: https://www.sqlite.org/lang_select.html

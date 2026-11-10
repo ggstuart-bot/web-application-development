@@ -11,7 +11,7 @@ This will require some routing logic and will create opportunities to avoid repe
 <!--more-->
 
 > Before you start, make sure everything is committed to your git repository. 
-You should have a working **hello world** page from the [previous exercise]({{< ref "/deno-server/deno-serve" >}}). 
+You should have a working **hello world** page from the [previous exercise]({{< ref "/http-servers/deno-serve" >}}). 
 
 ## Learning objectives
 

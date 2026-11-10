@@ -345,7 +345,7 @@ Our 404 response is just the words **Not found** in plain text.
 It doesn't have our stylesheet, our icon or a link back to the home page.
 How could we make the not-found page look like the rest of the site?
 
-[previous exercise]: deno-server/static-files/
+[previous exercise]: http-servers/static-files/
 [localhost]: http://localhost:8000/
 [books]: http://localhost:8000/books
 [anything]: http://localhost:8000/anything/you/like
@@ -354,7 +354,7 @@ How could we make the not-found page look like the rest of the site?
 [missing]: http://localhost:8000/assets/missing.css
 [404]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/404
 [strict equality]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality
-[serve dir]: deno-server/static-files/#serve-dir
+[serve dir]: http-servers/static-files/#serve-dir
 [equality]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Equality
 [undefined]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined
 [500]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/500

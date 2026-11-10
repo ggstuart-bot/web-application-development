@@ -623,37 +623,37 @@ Fix it.
 
 > We will start the next exercise with our solution, so you can compare it with yours.
 
-[previous exercise]: deno-server/books-page/
+[previous exercise]: sqlite-and-models/books-page/
 [books]: http://localhost:8000/books
-[linked resources]: deno-server/static-files/#linked-resources
-[not-found page]: deno-server/views/#html-404
+[linked resources]: http-servers/static-files/#linked-resources
+[not-found page]: views-and-controllers/views/#html-404
 [default cover]: http://localhost:8000/assets/default-cover.svg
 [nullish coalescing]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing
 [books page 2]: http://localhost:8000/books?page=2
 [url search]: https://developer.mozilla.org/en-US/docs/Web/API/URL/search
-[url pathname]: deno-server/static-files/#url-pathname
-[ctx]: deno-server/controllers/#ctx
-[destructuring]: deno-server/controllers/#title
+[url pathname]: http-servers/static-files/#url-pathname
+[ctx]: views-and-controllers/controllers/#ctx
+[destructuring]: views-and-controllers/controllers/#title
 [search params]: https://developer.mozilla.org/en-US/docs/Web/API/URL/searchParams
 [number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/Number
 [is safe integer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isSafeInteger
 [let]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let
-[mvc]: deno-server/database/#mvc
+[mvc]: sqlite-and-models/database/#mvc
 [limit offset]: https://www.sqlite.org/lang_select.html#limitoffset
-[named parameters]: deno-server/database/#models
+[named parameters]: sqlite-and-models/database/#models
 [books page 3]: http://localhost:8000/books?page=3
 [books page 0]: http://localhost:8000/books?page=0
 [books page abc]: http://localhost:8000/books?page=abc
 [count]: https://www.sqlite.org/lang_aggfunc.html#count
 [math ceil]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/ceil
 [math max]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max
-[conditional operator]: deno-server/controllers/#title
+[conditional operator]: views-and-controllers/controllers/#title
 [aria-current]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-current
 [rel]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel
 [aria-label]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-label
 [hateoas]: https://en.wikipedia.org/wiki/HATEOAS
 [url search params]: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams
-[refactoring]: deno-server/views/#refactoring
+[refactoring]: views-and-controllers/views/#refactoring
 [books page 4]: http://localhost:8000/books?page=4
 [books page 63]: http://localhost:8000/books?page=63
 [books page 64]: http://localhost:8000/books?page=64
