@@ -110,8 +110,7 @@ import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
     const { title, author, year } = book;
-    return `${title}
-by ${author} (${year})`;
+    return `${title}\nby ${author} (${year})`;
 }
 
 const first = books[0];
@@ -120,7 +119,18 @@ console.log(formatBook(first));
 
 [`function`][functions] declares a named function.
 Inside it we take `title`, `author` and `year` out of the book with [destructuring][destructuring].
-The [template literal][template literals] (backticks) can span more than one line, and `${…}` drops a value into the string.
+The [template literal][template literals] (backticks) defines the output string and `${…}` drops dynamic values into the string.
+
+> Notice we include a newline character `\n` in the template.
+> In fact, template literals can be split over multiple lines like this.
+> ```js
+> function formatBook(book) {
+>     const { title, author, year } = book;
+>     return `${title}
+> by ${author} (${year})`;
+> }
+> ```
+> We use the newline character to avoid the confusing indentation.
 
 Run it.
 
@@ -149,8 +159,7 @@ import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
     const { title, author, year } = book;
-    return `${title}
-by ${author} (${year})`;
+    return `${title}\nby ${author} (${year})`;
 }
 
 function formatList(books) {
@@ -203,8 +212,7 @@ import books from "./data/books.json" with { type: "json" };
 
 function formatBook(book) {
     const { title, author, year } = book;
-    return `${title}
-by ${author} (${year ?? "unknown"})`;
+    return `${title}\nby ${author} (${year ?? "unknown"})`;
 }
 
 function formatList(books) {
