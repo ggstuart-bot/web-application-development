@@ -73,8 +73,7 @@ by John D. Rateliff, J.R.R. Tolkien (2007)
 
 ## Arrow functions {#arrow-functions}
 
-`isMatch` is only used in one place, and to understand the filter we have to go and find it.
-We can write the function right where it is used instead.
+`isMatch` is only used in one place, we can write the function right where it is used instead.
 
 **main.js**
 ```JavaScript{hl_lines="12-14"}
