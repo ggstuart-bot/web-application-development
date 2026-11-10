@@ -67,9 +67,9 @@ import { Router } from "./tools/router.js";
 
 const app = new Router();
 
-app.get("/assets/*", staticController);
-app.get("/", homeController);
-app.get("/books", booksController);
+app.register("/assets/*", staticController);
+app.register("/", homeController);
+app.register("/books", booksController);
 
 export function server(request) {
     const url = new URL(request.url);
@@ -91,6 +91,8 @@ export function server(request) {
 ```
 
 Every request now gets its own `ctx` with an empty `data` object.
+`ctx.data` is where the controller and any middleware collect everything this response's HTML needs, in one place that both the view and the layout read from.
+The layout only uses `title` (and, later, `flash`).
 The not-found controller is given `ctx` too, like every other controller.
 
 > The middleware placeholder is still there.
@@ -401,7 +403,7 @@ To make that possible, our router has to learn to run a *chain* of functions, ra
 Update **server/tools/router.js**.
 
 **server/tools/router.js**
-```JavaScript{hl_lines="3 7 15-17 33-34 36-40"}
+```JavaScript{hl_lines="3 7 15-17 27-28 30-34"}
 import { NotFoundError } from "./errors.js";
 
 // Placeholder: this will need to change when we add URL parameters
@@ -411,28 +413,22 @@ export class Router {
         this.middleware = [];
     }
 
-    register(method, pathname, handler) {
+    register(pathname, handler) {
         const pattern = new URLPattern({ pathname });
-        this.routes.push({ method, pattern, handler });
+        this.routes.push({ pattern, handler });
     }
 
     use(fn) {
         this.middleware.push(fn);
     }
 
-    get(...args) {
-        this.register("GET", ...args);
-    }
-
     handle(ctx) {
-        const { url, request } = ctx;
+        const { url } = ctx;
         const route = this.routes.find((route) => {
-            return route.method === request.method && route.pattern.test(url);
+            return route.pattern.test(url);
         });
         if (!route) {
-            throw new NotFoundError(
-                `${request.method} ${url.pathname} doesn't match any known route`,
-            );
+            throw new NotFoundError(`${url.pathname} doesn't match any known route`);
         }
         return this.chain(ctx, [...this.middleware, route.handler]);
     }
@@ -453,11 +449,13 @@ The constructor gives the router a second array, `this.middleware`, and the new 
 
 `handle` no longer calls the route's handler directly.
 It makes a list of functions, with our middleware first and the route's handler last, and passes it to `chain`.
-`[...this.middleware, route.handler]` uses [spread syntax][spread syntax] again, this time to copy the middleware into a new array.
+`[...this.middleware, route.handler]` makes that list, as a new array.
+The `...` is [*spread syntax*][spread syntax]: it spreads the items of `this.middleware` out, one by one, into the new array, and `route.handler` goes on the end.
+`this.middleware` itself doesn't change.
 
 `chain` calls the first function in the list, and gives it a way to call the rest.
 
-- `const [fn, ...remaining] = handlers;` takes the first function out of the list, and collects the others in `remaining`. This is [array destructuring][array destructuring], with a rest element like the one in `get`.
+- `const [fn, ...remaining] = handlers;` is [array destructuring][array destructuring]. It works like the [object destructuring][destructuring] we already know, but by position: `fn` gets the first function. The `...remaining` is a [*rest element*][rest element], the opposite of spread: it collects all the other functions into a new array called `remaining`.
 - If nothing remains, `fn` is the route's handler, so we call it with `ctx`. (`!remaining.length` is `true` when `remaining` is empty.)
 - Otherwise we make `next`, an [arrow function][arrow functions] that runs `chain` on the rest of the list, and call `fn(ctx, next)`.
 
@@ -524,9 +522,9 @@ const app = new Router();
 
 app.use(withLogs);
 
-app.get("/assets/*", staticController);
-app.get("/", homeController);
-app.get("/books", booksController);
+app.register("/assets/*", staticController);
+app.register("/", homeController);
+app.register("/books", booksController);
 
 export function server(request) {
     const url = new URL(request.url);
@@ -581,9 +579,9 @@ const app = new Router();
 
 app.use(withLogs);
 
-app.get("/assets/*", staticController);
-app.get("/", homeController);
-app.get("/books", booksController);
+app.register("/assets/*", staticController);
+app.register("/", homeController);
+app.register("/books", booksController);
 
 export function server(request) {
     const url = new URL(request.url);
@@ -630,7 +628,7 @@ Every request is logged with its status, including our static files, because the
 Now open [http://localhost:8000/nope][nope].
 
 ```plaintext {linenos=false}
-Not found: GET /nope doesn't match any known route
+Not found: /nope doesn't match any known route
 ```
 
 There is no block for `/nope`.
@@ -676,9 +674,9 @@ const app = new Router();
 
 app.use(withLogs);
 
-app.get("/assets/*", staticController);
-app.get("/", homeController);
-app.get("/books", booksController);
+app.register("/assets/*", staticController);
+app.register("/", homeController);
+app.register("/books", booksController);
 
 export async function server(request) {
     const url = new URL(request.url);
@@ -797,6 +795,7 @@ Next, we will start accepting input from our users.
 [await]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await
 [async function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function
 [spread syntax]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+[rest element]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring#rest_property
 [array destructuring]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring#array_destructuring
 [arrow functions]: javascript-fundamentals/book-search/#arrow-functions
 [map]: javascript-fundamentals/books-data/#map
