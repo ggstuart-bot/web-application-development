@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150" width="300" height="450">
+    <title>Default cover</title>
+    <rect width="100" height="150" fill="#e0e0e0" />
+    <rect x="22" y="30" width="56" height="80" rx="3" fill="#9e9e9e" />
+    <rect x="22" y="30" width="8" height="80" fill="#757575" />
+    <rect x="38" y="48" width="32" height="5" fill="#e0e0e0" />
+    <rect x="38" y="60" width="24" height="5" fill="#e0e0e0" />
+</svg>
