@@ -91,6 +91,8 @@ export function server(request) {
 ```
 
 Every request now gets its own `ctx` with an empty `data` object.
+`ctx.data` is where the controller and any middleware collect everything this response's HTML needs, in one place that both the view and the layout read from.
+The layout only uses `title` (and, later, `flash`).
 The not-found controller is given `ctx` too, like every other controller.
 
 > The middleware placeholder is still there.

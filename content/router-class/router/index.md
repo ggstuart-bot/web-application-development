@@ -268,18 +268,13 @@ Check our pages.
 ### Checking the method {#method}
 
 Our router checks the method as well as the path.
-To see that, we need to send a request that isn't a `GET`.
+Every request we have sent so far is a `GET`, because visiting a URL in the address bar always sends a `GET` request.
+The terminal shows this: each request is logged with its method, `GET`, before its path.
+You can also see it in the **network** panel: select the request for `/books` and look at its headers.
 
-Open the **console** panel and run this.
-
-```JavaScript {linenos=false}
-fetch("/", { method: "POST" })
-```
-
-The [`fetch`][fetch] function sends a request from the browser, and the [method][http methods] option makes it a `POST`.
-Look in the **network** panel.
-The `POST` request to `/` is `404 Not Found`, because we have only registered `GET` routes.
-Before the router, it would have been `200 OK`.
+Before the router, a request with any other [method][http methods] for `/` would have been `200 OK`, because the `if` chain only looked at the path.
+Now it would be `404 Not Found`, because we have only registered `GET` routes.
+We will see this for real when we start sending `POST` requests.
 
 ### Why is this better? {#better}
 
@@ -561,7 +556,7 @@ In the next exercise we will give every controller, view and the layout the same
 ## Challenge: Try out the router
 
 - Try the [about page challenge][about challenge] again. How many lines of **server/main.js** does it take now?
-- In the **console**, send `fetch("/books", { method: "DELETE" })`. What does the terminal say?
+- Visit a few pages and watch the terminal. Which method does the browser use for the page itself, and for its stylesheet and images? Check your answer in the **network** panel.
 - Register `app.get("/*", homeController);` *before* the other routes. What happens to [http://localhost:8000/books][books], and why does the order of the routes matter?
 
 > Undo your changes, so that your code matches the starting point of the next exercise.
@@ -588,7 +583,6 @@ In the next exercise we will give every controller, view and the layout the same
 [nullish coalescing]: javascript-fundamentals/books-data/#missing-year
 [localhost]: http://localhost:8000/
 [nope]: http://localhost:8000/nope
-[fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Window/fetch
 [http methods]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods
 [rest parameters]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
 [spread syntax]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
