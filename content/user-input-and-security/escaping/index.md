@@ -50,6 +50,8 @@ The browser didn't show our user's text; it read it as HTML, and made a `<strong
 The box and the browser tab still show `<strong>Hobbit</strong>`, tags and all.
 The `value` attribute is just text to the browser, and so is everything inside `<title>`.
 
+{{<figure src="images/xss-bold.webp" alt="The books page after a search for Hobbit wrapped in strong tags. The heading reads Books matching “Hobbit” with Hobbit in bold, and so does the No books match message, while the tab title and the search box show the strong tags as text" caption="The heading shows **Hobbit** in bold, but the box still shows the tags.">}}
+
 Try a few more.
 
 - [`<em>Hobbit</em>`][emphasis]
@@ -62,6 +64,8 @@ Bold text is harmless, but the user can add *any* element.
 
 Visit [`<h1 style=color:red>SALE</h1>`][sale].
 Two huge red **SALE** headings appear: one in our heading, and one in the message.
+
+{{<figure src="images/xss-sale.webp" alt="The books page after a search for an h1 element with a red style. Two large red SALE headings appear on the page, one under the Books matching heading and one under the No books match message, while the search box shows the HTML that was typed" caption="Our search has become two red headings.">}}
 
 Try these too.
 
@@ -80,6 +84,8 @@ Now visit this one.
 The `</h1>` closes our heading early, so the user's paragraph looks like part of our page.
 It says **Site closed. Log in here**, and the link goes to [example.com][example], not to us.
 
+{{<figure src="images/xss-site-closed.webp" alt="The books page showing the text Site closed. Log in here, twice, with the mouse over the Log in here link and the browser status bar showing https://example.com" caption="Hovering over the link shows where it really goes.">}}
+
 Here is another one: [`<p>Free books for everyone! <a href=https://example.com>Claim yours</a></p>`][free books].
 
 Now look at the address bar.
@@ -95,6 +101,9 @@ HTML can include JavaScript, so a user can type that too.
 Visit [`<script>alert('oops')</script>`][oops].
 
 The browser shows an alert saying **oops**, and then another, because the script is in the heading *and* in the message.
+The page behind the first alert is still blank, because the browser runs a script as soon as it reaches it, before it has drawn the rest of the page.
+
+{{<figure src="images/xss-alert.webp" alt="A browser alert saying localhost:8000 says oops, over a blank grey page, with the script search in the address bar" caption="The browser ran the script from our search.">}}
 The browser ran code that a user typed, as part of our page.
 
 Scripts don't need a `<script>` element.
@@ -126,6 +135,8 @@ Remember how a `"` closed our `value` attribute early?
 
 Visit [this search][value attack].
 The box comes back empty, and an alert says **value**.
+
+{{<figure src="images/xss-value.webp" alt="A browser alert saying localhost:8000 says value, over the books page. The search box behind it is empty, and the No books match message shows the attribute text that was typed" caption="Every time the box gets focus, it runs the user’s code.">}}
 View the page source (**Ctrl+U**) and find the input.
 
 ```html
@@ -628,6 +639,8 @@ Go back through every stage, from [`<strong>Hobbit</strong>`][bold] to the [`val
 - There are no alerts at all.
 - Nothing is bold, red, huge or fake.
 - Each search shows as text, exactly as it was typed, in the heading, the message, the box and the tab.
+
+{{<figure src="images/escaped.webp" alt="The books page after a search for Hobbit wrapped in strong tags, with escaping in place. The heading shows the tags as plain text, and the search box and No books match message show the same text" caption="With escaping in place, the search is just text.">}}
 
 The page source for the first search shows why.
 
