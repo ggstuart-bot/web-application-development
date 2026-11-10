@@ -10,4 +10,4 @@ In this unit we will consider how a web server handles a variety of incoming req
 
 > Our web server code will develop from the position we left it in the [previous exercise][previous exercise].
 
-[previous exercise]: http-servers/a-simple-web-server/
+[previous exercise]: http-servers/deno-serve/
