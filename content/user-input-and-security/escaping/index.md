@@ -42,17 +42,17 @@ deno task dev
 
 ### Stage 1: Formatting {#formatting}
 
-Search for `<b>Hobbit</b>`, or visit [this link][bold].
+Search for `<strong>Hobbit</strong>`, or visit [this link][bold].
 
 The heading now says **Books matching "Hobbit"**, with **Hobbit** in bold, and so does the "no matches" message.
-The browser didn't show our user's text; it read it as HTML, and made a `<b>` element.
+The browser didn't show our user's text; it read it as HTML, and made a `<strong>` element.
 
-The box and the browser tab still show `<b>Hobbit</b>`, tags and all.
+The box and the browser tab still show `<strong>Hobbit</strong>`, tags and all.
 The `value` attribute is just text to the browser, and so is everything inside `<title>`.
 
 Try a few more.
 
-- [`<i>Hobbit</i>`][italic]
+- [`<em>Hobbit</em>`][emphasis]
 - [`<mark>Hobbit</mark>`][mark]
 - [`<s>Hobbit</s>`][strike]
 
@@ -193,11 +193,11 @@ Add jsr:@std/html@1.0.7
 It does exactly what the table above says.
 
 ```JavaScript {linenos=false}
-escape(`<b>"Hobbit" & 'friends'</b>`)
+escape(`<strong>"Hobbit" & 'friends'</strong>`)
 ```
 
 ```plaintext {linenos=false}
-&lt;b&gt;&quot;Hobbit&quot; &amp; &#39;friends&#39;&lt;/b&gt;
+&lt;strong&gt;&quot;Hobbit&quot; &amp; &#39;friends&#39;&lt;/strong&gt;
 ```
 
 ### Tagged templates {#tagged-templates}
@@ -215,11 +215,11 @@ Instead of building the string itself, JavaScript calls the function, `html`, wi
 - The first argument is an array of the fixed strings: the parts of the template *between* the `${}`.
 - Each value from a `${}` comes as one more argument.
 
-For the template above, with `q` set to `<b>Hobbit</b>`, the function is given these.
+For the template above, with `q` set to `<strong>Hobbit</strong>`, the function is given these.
 
 ```plaintext {linenos=false}
 [ '<p>No books match "', '"</p>' ]
-"<b>Hobbit</b>"
+"<strong>Hobbit</strong>"
 ```
 
 There is always one more string than there are values, because a value always sits *between* two strings.
@@ -623,7 +623,7 @@ It passes the layout's result to `new Response`, which uses it as a string, thro
 
 ## Trying the attacks again {#again}
 
-Go back through every stage, from [`<b>Hobbit</b>`][bold] to the [`value` attack][value attack].
+Go back through every stage, from [`<strong>Hobbit</strong>`][bold] to the [`value` attack][value attack].
 
 - There are no alerts at all.
 - Nothing is bold, red, huge or fake.
@@ -632,7 +632,7 @@ Go back through every stage, from [`<b>Hobbit</b>`][bold] to the [`value` attack
 The page source for the first search shows why.
 
 ```html
-                <title>Books matching &quot;&lt;b&gt;Hobbit&lt;/b&gt;&quot; | Bookshelves</title>
+                <title>Books matching &quot;&lt;strong&gt;Hobbit&lt;/strong&gt;&quot; | Bookshelves</title>
 ```
 
 Every character that could have started some HTML has been escaped.
@@ -698,7 +698,7 @@ my-app/
 
 These are questions to investigate, not changes to keep.
 
-- Search for `<b>Hobbit</b>` and view the page source. Find all four places the search appears. Is each one escaped the same way?
+- Search for `<strong>Hobbit</strong>` and view the page source. Find all four places the search appears. Is each one escaped the same way?
 - Two plain template literals are left: the title in **server/views/layout.js** and the message in **server/views/books.js**, and the controller builds `Books matching "${q}"` with one too. Why are they still safe?
 - Try your own attacks from each stage. Can you find one that still works?
 - What would happen if a book's title in the database contained `<script>`? Which commit protects us from that?
@@ -707,8 +707,8 @@ These are questions to investigate, not changes to keep.
 
 [previous exercise]: user-input-and-security/search/
 [quotes]: user-input-and-security/search/#quotes
-[bold]: http://localhost:8000/books?q=%3Cb%3EHobbit%3C%2Fb%3E
-[italic]: http://localhost:8000/books?q=%3Ci%3EHobbit%3C%2Fi%3E
+[bold]: http://localhost:8000/books?q=%3Cstrong%3EHobbit%3C%2Fstrong%3E
+[emphasis]: http://localhost:8000/books?q=%3Cem%3EHobbit%3C%2Fem%3E
 [mark]: http://localhost:8000/books?q=%3Cmark%3EHobbit%3C%2Fmark%3E
 [strike]: http://localhost:8000/books?q=%3Cs%3EHobbit%3C%2Fs%3E
 [sale]: http://localhost:8000/books?q=%3Ch1%20style%3Dcolor%3Ared%3ESALE%3C%2Fh1%3E
