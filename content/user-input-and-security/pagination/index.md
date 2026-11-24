@@ -88,7 +88,7 @@ For now, in all of those cases we use page 1 instead.
 
 > `page` is declared with [`let`][let] rather than `const`, because we might change it on the next line.
 
-Finally, we pass `page` and `PAGE_SIZE` to `getBooks`.
+Finally, we pass `page` and [`PAGE_SIZE`][page size] to `getBooks`, instead of just `PAGE_SIZE`.
 
 ### One page of books {#one-page}
 
@@ -125,7 +125,7 @@ export function getBooks(page, pageSize) {
 Page 1 skips none and returns the first 16, page 2 skips 16 and returns the next 16, and so on.
 `:limit` and `:offset` are [named parameters][named parameters], just like the ones in `createBook`.
 
-We already [sort the books][order by] with `ORDER BY title`, and now it matters even more.
+We already [sort the books][sorted] with [`ORDER BY title`][order by], and now it matters even more.
 
 > Paging needs a stable order.
 > Each page is a separate query, and the database only skips rows by counting them.
@@ -537,7 +537,7 @@ A [regular expression][regex] such as `/^[1-9]\d*$/` would also work, but that i
 [searchparams]: https://developer.mozilla.org/en-US/docs/Web/API/URL/searchParams
 [usp get]: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams/get
 [books]: http://localhost:8000/books
-[default cover]: sqlite-and-models/database/
+[default cover]: sqlite-and-models/database/#default-cover
 [missing year]: javascript-fundamentals/books-data/#missing-year
 [conditional operator]: views-and-controllers/controllers/#title
 [falsy]: https://developer.mozilla.org/en-US/docs/Glossary/Falsy
@@ -545,11 +545,13 @@ A [regular expression][regex] such as `/^[1-9]\d*$/` would also work, but that i
 [page 59]: http://localhost:8000/books?page=59
 [number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/Number
 [is safe integer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isSafeInteger
+[page size]: sqlite-and-models/books-page/#page-size
 [let]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let
 [order by]: https://www.sqlite.org/lang_select.html#orderby
+[sorted]: sqlite-and-models/database/#order-by
 [limit offset]: https://www.sqlite.org/lang_select.html#limitoffset
 [named parameters]: sqlite-and-models/database/#models
-[mvc]: sqlite-and-models/database/#mvc
+[mvc]: sqlite-and-models/books-page/#mvc
 [page 0]: http://localhost:8000/books?page=0
 [page two]: http://localhost:8000/books?page=two
 [page 100]: http://localhost:8000/books?page=100
