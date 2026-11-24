@@ -452,12 +452,14 @@ Create a stylesheet **public/styles.css** with some very simple styles.
     color-scheme: light dark; /* light or dark page colours, from the OS setting */
 }
 
+/* No gap around the page, and the system's own font at a light weight */
 body {
     margin: 0;
     font-family: system-ui;
     font-weight: 300;
 }
 
+/* Headings are a little heavier than the light body text */
 h1 {
     font-weight: 400;
 }
@@ -469,6 +471,7 @@ body > * {
 ```
 
 There is nothing new here, these are the same kind of rules we wrote in the [Hello world][hello world] exercise.
+Each ruleset has a short comment to remind us what it does.
 
 Refresh the page.
 The heading and paragraph should have a new font and some space around them.

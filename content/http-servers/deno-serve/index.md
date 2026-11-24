@@ -542,7 +542,7 @@ Browsers are very forgiving, so this works, but a proper HTML document has a bit
 Update **server/main.js** to build a complete document.
 
 **server/main.js**
-```JavaScript{hl_lines="7-20"}
+```JavaScript{hl_lines="7-19"}
 export function server(request) {
     // Placeholder: this will need to change when we add middleware
     console.log(request.method, request.url);
