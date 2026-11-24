@@ -1604,7 +1604,7 @@ Sign in as **testUser1** (the password is `testUser1!`), and press **make profil
 Sign out, and [http://localhost:8000/users/1][user 1] is not found.
 Sign in again, make it public, and it's back.
 
-{{<figure src="images/profile-private.webp" alt="testUser2's own profile, with an aside saying Profile is private, Only you can see your profile and public shelves, and a make profile public button" caption="Your own profile says who can see it.">}}
+{{<figure src="images/profile-private.webp" alt="testUser2's own profile, with an aside showing the Change avatar form and, below it, Profile is private, Only you can see your profile and a make profile public button" caption="Your own profile says who can see it.">}}
 
 ## Conclusion
 

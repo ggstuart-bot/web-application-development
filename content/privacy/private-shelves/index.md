@@ -1523,9 +1523,10 @@ It says who can see the shelf, and has `visibilityButton`, its second use.
 
 As **testUser1**, open [**to read**][shelf 3].
 It says **Only you can see this shelf**, with a **make public** button.
-Press it, and you land on My shelves, with **to read** among your public shelves.
 
 {{<figure src="images/shelf-visibility.webp" alt="testUser1's to read shelf, with an aside showing the rename form, a Visibility section saying Only you can see this shelf with a make public button, and the delete shelf button" caption="Your own shelf's page says who can see it.">}}
+
+Press it, and you land on My shelves, with **to read** among your public shelves.
 
 ## The permissions pattern {#pattern}
 
@@ -1553,7 +1554,9 @@ Our app doesn't keep that rule yet.
 
 1. Sign in as **testUser2**. Your profile is private.
 2. On [My shelves][shelves], press **make public** on **sci-fi**.
-3. Sign out, and open [the home page][home]. **sci-fi** is there, with a broken picture beside **testUser2**'s name, because their avatar is private.
+The form posts to `/shelves/4/publish`, and the page flashes **Shelf 'sci-fi' is now public**.
+3. Sign out, and open [the home page][home]. **sci-fi** is there under Public shelves, with a broken picture beside **testUser2**'s name.
+The picture is broken because their profile is still private, so `/users/2/avatar` and `/users/2` both return `404 Not Found` for a visitor.
 4. Follow the link to **testUser2**. It's not found.
 
 Run `deno task db:reset` to put it right.
