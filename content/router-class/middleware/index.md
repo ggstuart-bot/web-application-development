@@ -601,6 +601,8 @@ export async function withErrors(ctx, next) {
 Refresh [http://localhost:8000/nope][nope].
 The not-found page looks exactly as it did.
 
+{{<figure src="images/not-found.webp" alt="The not-found page at /nope, with the heading Not found and the message The requested resource was not found, in our layout. The network panel shows the nope document with a 404 status" caption="The not-found page now comes from errorView, with a 404 status.">}}
+
 ## Unexpected errors {#unexpected}
 
 `withErrors` still throws anything that isn't a `NotFoundError`.
@@ -698,6 +700,8 @@ The [`else`][if else] means the second line only runs when the first condition i
 
 Refresh [http://localhost:8000/][localhost].
 It is still `500 Internal Server Error`, but now we see our server error page, in our layout.
+
+{{<figure src="images/server-error.webp" alt="The home page address showing the heading Server error and the message Something went wrong on the server, in our layout. The network panel shows the localhost document with a 500 status" caption="An unexpected error now gets our server error page, with a 500 status.">}}
 
 The terminal shows the `UnexpectedError` with its stack, and then the original error, with its stack, under `[cause]`.
 

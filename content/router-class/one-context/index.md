@@ -353,6 +353,7 @@ Open [http://localhost:8000/books][books], and look at the nav in the **elements
 ```
 
 On [http://localhost:8000/][localhost] the same link has `aria-current="false"`.
+`"false"` means the same as leaving the attribute out: this link is not the current page.
 The page looks the same, because nothing in our stylesheet uses the attribute yet.
 
 ## Filling the current link {#nav-styles}
@@ -403,7 +404,12 @@ The `&:hover` is nested inside it, like the `& > header` in our `body` rule, and
 
 Refresh [http://localhost:8000/books][books].
 The **books** link is still filled with the accent colour.
+
+{{<figure src="images/nav-current.webp" alt="The books page, with the books link in the dark header filled with the red accent colour, as a pill with round ends" caption="On the books page, the books link is filled with the accent.">}}
+
 On [http://localhost:8000/][localhost] it is an outlined pill.
+
+{{<figure src="images/nav-pill.webp" alt="The home page, with the books link in the dark header drawn as an outlined pill with no fill" caption="On the home page, the books link is an outlined pill.">}}
 
 ## Conclusion
 
