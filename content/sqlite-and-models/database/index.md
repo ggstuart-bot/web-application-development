@@ -1,75 +1,41 @@
 ---
 type: exercise
 title: A books database
-weight: 8
+weight: 9
 author: Dr Graeme Stuart
 ---
 
-In this exercise we will create a SQLite database and fill it with books.
-Our website won't change at all, but we will be able to list the books in the terminal.
+In this exercise we will move our books into a SQLite database.
+Our books page will look the same, but the books will come from the database, sorted by title.
 
 <!--more-->
 
-> You should have a home page and a not-found page, each with its own controller, from the [previous exercise][previous exercise].
+> You should have a books page showing the first 16 books from the [previous exercise][previous exercise].
 > Before you start, make sure everything is committed to your git repository.
 
 ## Learning objectives
 
-*Bookshelves* needs books.
-In this exercise we will store them in a database, ready to show them on the books page in the next exercise.
+Our books model reads every book from a JSON file, and then throws most of them away.
+In this exercise we will store the books in a database, and ask it for only the books we need.
 By the end of this exercise you should be able to:
 
 - Add the `@db/sqlite` package and explain why its tasks need `-A`
 - Create a table with tasks that we can run again whenever we need a fresh database
-- Seed the table from a JSON file, and explain why we credit the source of the data
-- Write a *model* with prepared statements and named parameters
-- Explain where models fit in model-view-controller
+- Seed the table from a JSON file
+- Write model functions with prepared statements and named parameters
+- Change where our data lives without changing our controllers or views
+- Sort rows with `ORDER BY`, and show a default value when some data are missing
 
-## The data {#data}
+## Setup
 
-We need some books.
-We will use a list of the 1,000 most-rated books on Goodreads, from a public dataset called [goodbooks-10k][goodbooks].
+Start the server in development mode.
 
-Create a folder called **db** in the root of the project.
-Save {{<a href="files/books.json" download="books.json" >}}this list of books{{< /a >}} as **books.json** and {{<a href="files/BOOKS-ATTRIBUTION.txt" download="BOOKS-ATTRIBUTION.md" >}}this attribution file{{< /a >}} as **BOOKS-ATTRIBUTION.md**, both in the **db** folder.
-
-**books.json** is a JSON array with one book on each line.
-Here's the first one.
-
-**db/books.json**
-```json {linenos=false}
-{ "title": "The Hunger Games", "author": "Suzanne Collins", "year": 2008, "thumbnailUrl": "https://images.gr-assets.com/books/1447303603m/2767052.jpg", "coverUrl": "https://images.gr-assets.com/books/1447303603l/2767052.jpg" }
+```bash {linenos=false}
+deno task dev
 ```
 
-Each book has a `title`, an `author` and a `year`, plus links to a small and a large cover image.
-Some books have no cover images, so their `thumbnailUrl` and `coverUrl` are `null`.
-
-### Crediting the data {#attribution}
-
-We didn't create this data, so we must say where it came from.
-
-**db/BOOKS-ATTRIBUTION.md**
-```markdown
-# Book data
-
-- `books.json` is derived from goodbooks-10k by Zygmunt Zając
-  (https://github.com/zygmuntz/goodbooks-10k), licensed CC BY-SA 4.0
-  (https://creativecommons.org/licenses/by-sa/4.0/). Changes: the 1,000 most-rated books; titles,
-  authors and years cleaned; multiple authors joined into one field. This derived data is shared
-  under CC BY-SA 4.0.
-- Cover images (thumbnailUrl, coverUrl) belong to their publishers; they are linked, not copied.
-```
-
-The original dataset is shared under the [CC BY-SA 4.0][cc by-sa] licence.
-*BY* means anyone who uses it must credit the author.
-*SA* (share alike) means anything we make from it must be shared under the same licence.
-We changed the data, so the attribution says what we changed, and our version is shared under the same licence.
-
-> Crediting your sources is good practice anyway.
-> With data like this, it's also a condition of using it at all.
-
-> The cover images belong to their publishers.
-> We only link to them, we don't copy them into our project.
+Open [http://localhost:8000/books][books].
+You should see the first 16 books, starting with **The Hunger Games**.
 
 ## Adding SQLite {#sqlite}
 
@@ -106,7 +72,7 @@ Add jsr:@db/sqlite@0.12.0
 
 ## Opening the database {#db}
 
-Create a folder called **models** inside the **server** folder, with a file called **db.js**.
+Create **db.js** in the **server/models** folder, next to our books model.
 
 **server/models/db.js**
 ```JavaScript
@@ -128,7 +94,7 @@ So our database tasks must always run from the project root.
 > If you see `SqliteError: 14: unable to open database file`, you are probably running a script from the wrong folder.
 > Use `deno task` instead.
 
-The database is built from **books.json**, so we can always make it again.
+The database will be built from **db/books.json**, so we can always make it again.
 We don't want it in our git repository.
 Create a file called **.gitignore** in the root of the project.
 
@@ -209,13 +175,15 @@ A file called **app.db** has appeared in the **db** folder.
 > That needs several [permissions][permissions]: the network, the file system and FFI itself.
 > `-A` allows them all, just as it does for our server tasks.
 
-## A books model {#models}
+## Creating books {#models}
 
 Now we need some code to put books into the database.
-Create **server/models/books.js**.
+That's a job for our [books model][models].
+Add a `createBook` function to **server/models/books.js**.
 
 **server/models/books.js**
-```JavaScript
+```JavaScript{hl_lines="2-10"}
+import books from "../../db/books.json" with { type: "json" };
 import { db } from "./db.js";
 
 export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
@@ -225,7 +193,14 @@ export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
         RETURNING id, title, author, year, thumbnailUrl, coverUrl
     `).get({ title, author, year, thumbnailUrl, coverUrl });
 }
+
+// Placeholder: this will need to change when we add search
+export function getBooks(limit) {
+    return books.slice(0, limit);
+}
 ```
+
+The model imports `db` from **db.js**, next to it in the **models** folder.
 
 `createBook` takes a book and inserts it into the **books** table.
 We take the book's properties out with [destructuring][destructuring], just as we did with the options for `render`.
@@ -241,14 +216,7 @@ The `:title`, `:author` and so on are *named parameters*.
 [`RETURNING`][returning] gives us back the new row, including the `id` the database chose.
 We list the columns we want, rather than asking for everything, so we only get what we ask for, even if the table gains more columns later.
 
-### The M in MVC {#mvc}
-
-**server/models/books.js** is a *model*.
-Models are the M in [model-view-controller][mvc views].
-We already have [views][mvc views] which present information and [controllers][mvc controllers] which handle requests.
-A model looks after our data, and the rest of our code asks the model rather than talking to the database itself.
-
-Just like views and controllers, a model is a set of related functions grouped into a module.
+`getBooks` still reads **db/books.json**, so the books page is unchanged.
 
 ## Seeding the database {#seed}
 
@@ -260,21 +228,13 @@ Create **tasks/db-seed.js**.
 import books from "../db/books.json" with { type: "json" };
 import { createBook } from "../server/models/books.js";
 
-// Temporary: seed only 20 books until we introduce paging
-for (const book of books.slice(0, 20)) {
+for (const book of books) {
     createBook(book);
 }
 ```
 
-We import **books.json** directly.
-The [`with { type: "json" }`][import attributes] part tells deno to read the file as JSON, so `books` is an array of objects.
+We import **books.json** just as our model does, so `books` is an array of objects.
 Then we loop over the books with [`for...of`][for of] and create each one with our model.
-
-`books.slice(0, 20)` gives us only the first 20 books.
-This is a deliberate, temporary limit.
-Later, when we seed all 1,000, we will see why our pages need *paging*.
-
-> The `Temporary:` comment marks a line we will change, like our placeholders.
 
 Add a `db:seed` task, and a `db:reset` task which runs `db:create` and then `db:seed`.
 
@@ -312,7 +272,7 @@ Now run it again.
 deno task db:seed
 ```
 
-Our table now has 40 rows, every book twice.
+Our table now has 2,000 rows, every book twice.
 Seeding adds to whatever is already there.
 
 That's what `db:reset` is for.
@@ -321,7 +281,7 @@ It drops the table, creates it again and seeds it once.
 > Running `db:create` twice is safe, because it drops the table and creates it again.
 > However many times we run it, we end up with the same empty table.
 > An operation like this is called [*idempotent*][idempotent].
-> `db:seed` is not idempotent, running it twice gave us 40 rows.
+> `db:seed` is not idempotent, running it twice gave us 2,000 rows.
 > That's why `db:reset` runs `db:create` before `db:seed`, so the whole reset is safe to repeat.
 > Idempotency is an important concept in HTTP, and we will come across it again later.
 
@@ -335,17 +295,18 @@ Task db:create deno -A tasks/db-create.js
 Task db:seed deno -A tasks/db-seed.js
 ```
 
-We are back to 20 books.
+We are back to 1,000 books.
 
 > `&&` runs the second command only if the first one succeeded.
 
-## Listing the books {#get-books}
+The books are in the database now, but the books page still reads them from **db/books.json**.
 
-We can put books in, but we can't see them yet.
-Add a `getBooks` function to **server/models/books.js**.
+## Reading the books from the database {#get-books}
+
+Update `getBooks` in **server/models/books.js** to ask the database for the books.
 
 **server/models/books.js**
-```JavaScript{hl_lines="11-16"}
+```JavaScript{hl_lines="13-16"}
 import { db } from "./db.js";
 
 export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
@@ -357,95 +318,145 @@ export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
 }
 
 // Placeholder: this will need to change when we add search
-export function getBooks() {
+export function getBooks(limit) {
     return db.prepare(`
         SELECT id, title, author, year, thumbnailUrl, coverUrl FROM books
-    `).all();
+        LIMIT :limit
+    `).all({ limit });
 }
 ```
 
-[`SELECT`][select] reads rows from a table, and `.all()` returns every row as an array of objects.
+[`SELECT`][select] reads rows from the **books** table, and `LIMIT :limit` asks for no more than `limit` rows.
+`.all()` fills in the `:limit` parameter from the object we pass it, and returns the rows as an array of objects.
 
-> Another placeholder.
-> When we add search, `getBooks` will need to find only the matching books.
+The model no longer imports **db/books.json**, and `getBooks` keeps its search placeholder.
 
-Our server doesn't use the model yet.
-For now, create a small task to list the books in the terminal.
+> Make sure you have run `deno task db:reset`, so that the database has the books in it.
 
-**tasks/books.js**
-```JavaScript
-import { getBooks } from "../server/models/books.js";
+Refresh [http://localhost:8000/books][books].
+The page looks just as it did, with the same 16 books.
 
-for (const book of getBooks()) {
-    console.log(book.id, book.title, book.author, book.year);
+Our books controller and our views haven't changed at all.
+They still call `getBooks(PAGE_SIZE)` and get back an array of books, so they don't know or care that the books now come from a database.
+
+**This is the payoff of keeping our data in a model.**
+We changed where the data lives in one place, and nothing else had to change.
+
+## Sorting by title {#order-by}
+
+A database doesn't promise to return rows in any particular order.
+We happen to get our books in the order we seeded them, but that could change.
+
+Add [`ORDER BY title`][order by] to the query in **server/models/books.js**, before `LIMIT`.
+
+**server/models/books.js**
+```JavaScript{hl_lines="15"}
+import { db } from "./db.js";
+
+export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
+    return db.prepare(`
+        INSERT INTO books(title, author, year, thumbnailUrl, coverUrl)
+        VALUES (:title, :author, :year, :thumbnailUrl, :coverUrl)
+        RETURNING id, title, author, year, thumbnailUrl, coverUrl
+    `).get({ title, author, year, thumbnailUrl, coverUrl });
+}
+
+// Placeholder: this will need to change when we add search
+export function getBooks(limit) {
+    return db.prepare(`
+        SELECT id, title, author, year, thumbnailUrl, coverUrl FROM books
+        ORDER BY title
+        LIMIT :limit
+    `).all({ limit });
 }
 ```
 
-Add it to **deno.json**.
+The database sorts all the books by title, and then gives us the first 16.
 
-**deno.json**
-```json{hl_lines="7-8"}
-{
-    "tasks": {
-        "serve": "deno -A tasks/server.js",
-        "dev": "deno --watch -A tasks/server.js",
-        "db:create": "deno -A tasks/db-create.js",
-        "db:seed": "deno -A tasks/db-seed.js",
-        "db:reset": "deno task db:create && deno task db:seed",
-        "books": "deno -A tasks/books.js"
-    },
-    "imports": {
-        "@db/sqlite": "jsr:@db/sqlite@^0.12.0",
-        "@std/http": "jsr:@std/http@^1.1.4"
-    }
+Refresh [http://localhost:8000/books][books].
+The page now starts at the beginning of the alphabet, and the same books appear every time.
+
+> Numbers and punctuation come before letters, so the first book is **'Salem's Lot**, followed by **11/22/63**, **1776** and **1984**.
+
+But some of the cards are broken.
+**1st to Die**, **2001: A Space Odyssey**, **A Beautiful Mind**, **A Bend in the Road** and **A Child Called "It"** have no cover, just a broken image.
+
+{{<figure src="images/broken-covers.webp" alt="The books page sorted by title, where the cards for 1st to Die, 2001: A Space Odyssey and A Beautiful Mind show a broken image where the cover should be" caption="Sorting by title brings some books with no cover onto the page.">}}
+
+We noted when we [added covers][covers] that some books have no cover.
+None of the first 16 books in **books.json** were like that, but sorting has brought five of them onto our page.
+View the page source (**Ctrl + U**) and find **1st to Die**.
+
+```html {linenos=false}
+<img class="cover" src="null" alt="" width="200" height="300" loading="lazy">
+```
+
+Its `coverUrl` is `null`, and the template literal has turned that into the text `null`.
+The browser asks for a cover at **null**, which doesn't exist.
+
+## A default cover {#default-cover}
+
+A book with no cover should still look like a book.
+
+Save {{<a href="files/default-cover.svg" download="default-cover.svg" >}}this default cover{{< /a >}} as **default-cover.svg** in the **public** folder.
+Click [http://localhost:8000/assets/default-cover.svg][default cover] to check that it is served.
+
+Now update **server/views/books.js** to use it when a book has no cover.
+
+**server/views/books.js**
+```JavaScript{hl_lines="1-2 17 20"}
+const DEFAULT_COVER = "/assets/default-cover.svg";
+
+export function booksView({ data: { books } }) {
+    return `
+        <section>
+            <header>
+                <h1>Books</h1>
+            </header>
+            <ul class="grid">
+                ${books.map(bookCard).join("")}
+            </ul>
+        </section>
+    `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return `
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author} (${book.year})</p>
+            </div>
+        </li>
+    `;
 }
 ```
 
-**This task is temporary.**
-In the next exercise we will show the books on the books page, and then we will delete **tasks/books.js** and remove the `books` task from **deno.json**.
+`DEFAULT_COVER` is the address of our default cover, a constant in capitals like [`PAGE_SIZE`][page size].
+It isn't exported, because only this module uses it.
 
-Run it.
+`??` is the [nullish coalescing operator][nullish coalescing], which we used for missing years in the terminal.
+If `book.coverUrl` is `null` (or `undefined`), `cover` is `DEFAULT_COVER`.
+Otherwise, `cover` is `book.coverUrl`.
 
-```bash {linenos=false}
-deno task books
-```
+Refresh [http://localhost:8000/books][books].
+Every card now has a cover.
 
-```plaintext {linenos=false}
-Task books deno -A tasks/books.js
-1 The Hunger Games Suzanne Collins 2008
-2 Harry Potter and the Sorcerer's Stone J.K. Rowling 1997
-3 Twilight Stephenie Meyer 2005
-4 To Kill a Mockingbird Harper Lee 1960
-5 The Great Gatsby F. Scott Fitzgerald 1925
-6 The Fault in Our Stars John Green 2012
-7 The Hobbit J.R.R. Tolkien 1937
-8 The Catcher in the Rye J.D. Salinger 1951
-9 Pride and Prejudice Jane Austen 1813
-10 Angels & Demons Dan Brown 2000
-11 The Diary of a Young Girl Anne Frank 1947
-12 1984 George Orwell 1949
-13 Divergent Veronica Roth 2011
-14 Animal Farm George Orwell 1945
-15 Harry Potter and the Prisoner of Azkaban J.K. Rowling 1999
-16 Catching Fire Suzanne Collins 2009
-17 The Kite Runner Khaled Hosseini 2003
-18 The Girl with the Dragon Tattoo Stieg Larsson 2005
-19 Harry Potter and the Chamber of Secrets J.K. Rowling 1998
-20 The Fellowship of the Ring J.R.R. Tolkien 1954
-```
-
-Our 20 books, each with the `id` the database gave it.
+{{<figure src="images/default-cover.webp" alt="The same books page, where 1st to Die, 2001: A Space Odyssey and A Beautiful Mind now show a plain grey book as their cover" caption="Books without a cover now get the default one.">}}
 
 ## Conclusion
 
 We have added SQLite to our project and created a **books** table with a task we can run again at any time.
-We seeded it from a JSON file, credited under its CC BY-SA licence.
-We wrote our first model, using prepared statements and named parameters, so the rest of our code never needs to write SQL.
-Our website hasn't changed, but the books are ready for the books page.
+We seeded it from our JSON file, and changed our books model to read from the database instead.
+We used prepared statements and named parameters, so the rest of our code never needs to write SQL.
+Our controller and views didn't change at all.
+Then we sorted the books by title, and gave the books with no cover a default one.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="4-7 16-18 27-29 31"}
+```plaintext {linenos=false, hl_lines="5 9 20 30-31 33"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -454,10 +465,12 @@ my-app/
 │   ├── BOOKS-ATTRIBUTION.md
 │   └── books.json
 ├── public/
+│   ├── default-cover.svg
 │   ├── icon.svg
 │   └── styles.css
 ├── server/
 │   ├── controllers/
+│   │   ├── books.js
 │   │   ├── home.js
 │   │   ├── notFound.js
 │   │   └── static.js
@@ -467,12 +480,12 @@ my-app/
 │   ├── tools/
 │   │   └── render.js
 │   ├── views/
+│   │   ├── books.js
 │   │   ├── home.js
 │   │   ├── layout.js
 │   │   └── notFound.js
 │   └── main.js
 ├── tasks/
-│   ├── books.js
 │   ├── db-create.js
 │   ├── db-seed.js
 │   └── server.js
@@ -485,19 +498,18 @@ my-app/
 
 ## Challenge: Experiment with the database
 
-- Change `20` to `100` in **tasks/db-seed.js**, then run `deno task db:reset` and `deno task books`. Can you still read the whole list?
-- In `getBooks`, temporarily add `WHERE year < 1950` after `FROM books` and run `deno task books` again. Try other conditions, such as `WHERE author = 'J.K. Rowling'`.
-- Open **db/books.json** and look for a book with no cover images.
+- In `getBooks`, temporarily add `WHERE year < 1950` after `FROM books` and refresh [http://localhost:8000/books][books]. Try other conditions, such as `WHERE author = 'J.K. Rowling'`.
+- Try `ORDER BY year` or `ORDER BY author` instead of `ORDER BY title`. What does `ORDER BY title DESC` do?
+- Open **db/books.json** and look for another book with no cover images.
 
-> Make sure **tasks/db-seed.js** and **server/models/books.js** are back to the versions above, then run `deno task db:reset` before moving on.
+> Make sure **server/models/books.js** is back to the version above before moving on.
 
 Finally, something to think about.
-Our `books` task is the only thing that can see the books.
-What would a controller and a view for the books page need to do?
+Our books page only ever shows the first 16 books.
+How could a visitor see the other 984?
 
-[previous exercise]: views-and-controllers/controllers/
-[goodbooks]: https://github.com/zygmuntz/goodbooks-10k
-[cc by-sa]: https://creativecommons.org/licenses/by-sa/4.0/
+[previous exercise]: sqlite-and-models/books-page/
+[books]: http://localhost:8000/books
 [sqlite]: https://www.sqlite.org/
 [db sqlite]: https://jsr.io/@db/sqlite
 [jsr imports]: http-servers/static-files/#jsr-imports
@@ -505,13 +517,16 @@ What would a controller and a view for the books page need to do?
 [create table]: https://www.sqlite.org/lang_createtable.html
 [ffi]: https://docs.deno.com/runtime/fundamentals/ffi/
 [permissions]: http-servers/deno-serve/#permissions
+[models]: sqlite-and-models/books-page/#models
 [destructuring]: views-and-controllers/controllers/#title
 [prepared statement]: https://en.wikipedia.org/wiki/Prepared_statement
 [sql injection]: https://en.wikipedia.org/wiki/SQL_injection
 [returning]: https://www.sqlite.org/lang_returning.html
-[mvc views]: views-and-controllers/views/#mvc
-[mvc controllers]: views-and-controllers/controllers/#mvc
-[import attributes]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import/with
 [for of]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of
-[select]: https://www.sqlite.org/lang_select.html
 [idempotent]: https://developer.mozilla.org/en-US/docs/Glossary/Idempotent
+[select]: https://www.sqlite.org/lang_select.html
+[order by]: https://www.sqlite.org/lang_select.html#the_order_by_clause
+[covers]: sqlite-and-models/books-page/#cover
+[default cover]: http://localhost:8000/assets/default-cover.svg
+[page size]: sqlite-and-models/books-page/#page-size
+[nullish coalescing]: javascript-fundamentals/books-data/#missing-year

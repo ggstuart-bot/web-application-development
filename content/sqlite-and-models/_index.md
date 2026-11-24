@@ -8,5 +8,5 @@ In this unit we will add persistent data with a SQLite database, and meet the M 
 
 <!--more-->
 
-We will create a books database and seed it with data.
-The unit ends with a complete model, view and controller for a books page.
+We will build a books page with a model, a view and a controller, reading the books from a JSON file.
+Then we will create a books database, seed it with data, and move the model over to it without changing the controller or the view.
