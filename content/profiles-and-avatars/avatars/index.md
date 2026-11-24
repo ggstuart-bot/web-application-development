@@ -630,6 +630,7 @@ A square picture with corners rounded by half its width is a circle.
 
 Open [http://localhost:8000/users/1][user 1].
 **testUser1**'s picture is under their name, in a circle.
+Visit [http://localhost:8000/users/2][user 2] signed out, and **testUser2**'s picture is there too.
 
 {{<figure src="images/profile-avatar.webp" alt="testUser2's profile, with their avatar in a circle under the heading testUser2, and their shelves below" caption="An avatar on testUser2's profile.">}}
 
@@ -911,7 +912,7 @@ Refresh [the home page][home] while signed in as **testUser1** (the password is 
 Your avatar is beside **profile** in the nav, and each shelf card has its owner's picture beside their name.
 Open **sci-fi**, [http://localhost:8000/shelves/4][shelf 4], and **testUser2**'s picture is beside their name.
 
-{{<figure src="images/avatars-beside-names.webp" alt="The home page for testUser1, with a small avatar beside profile in the nav, and small avatars beside each owner's name on the shelf cards" caption="Avatars beside users' names.">}}
+{{<figure src="images/avatars-beside-names.webp" alt="The home page for testUser1, with a small avatar beside profile in the nav, and testUser1's small avatar on the shelf cards" caption="Avatars beside users' names.">}}
 
 ## An upload form {#upload-form}
 
@@ -1277,6 +1278,7 @@ export async function uploadAvatarController(ctx) {
 Upload **testUser2.webp** again.
 You land on your profile with the message **Avatar updated**, and **testUser1** now has **testUser2**'s picture, on the profile and in the nav.
 The address of the picture ends with `?v=3`, because it's the third file in the database, so the browser fetches it rather than showing the old one.
+The message slides away after a few seconds; hover over the red strip to bring it back.
 
 {{<figure src="images/avatar-updated.webp" alt="testUser1's profile after the upload, with the message Avatar updated and testUser2's picture in place of testUser1's" caption="The new avatar is saved.">}}
 
@@ -1486,6 +1488,7 @@ On your profile, switch the file picker to show all files, pick **notes.txt**, a
 
 The upload goes through, with **Avatar updated**, and the profile shows a broken picture.
 The browser was told the file is a picture, and it isn't.
+Open [http://localhost:8000/users/1/avatar][avatar 1], and you'll see the text of the file, served as `text/plain`.
 
 {{<figure src="images/broken-avatar.webp" alt="testUser1's profile after uploading a text file, with the message Avatar updated and a broken picture where the avatar should be" caption="A text file is not an avatar.">}}
 
@@ -1800,7 +1803,7 @@ function avatarForm(user, errors) {
 - The `accept` list comes from `AVATAR_TYPES`, so the form and the schema can't disagree.
 
 Upload **notes.txt** again.
-This time the profile comes back with **Avatar must be one of these types: image/png, image/jpeg, image/webp.** under the input, and the avatar stays as it was.
+This time the page comes back at [http://localhost:8000/users/1/avatar][avatar 1], with **Avatar must be one of these types: image/png, image/jpeg, image/webp.** under the input, and the avatar stays as it was.
 The terminal shows the `400` response.
 
 ```plaintext {linenos=false}
