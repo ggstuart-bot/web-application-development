@@ -156,7 +156,7 @@ But look at the **nope** row in the **network** panel.
 ```http
 HTTP/1.1 200 OK
 content-type: text/html
-content-length: 1071
+content-length: 1127
 date: Thu, 29 Oct 2026 09:13:33 GMT
 ```
 
@@ -233,7 +233,7 @@ Refresh [http://localhost:8000/nope][nope] and check the **network** panel.
 ```http
 HTTP/1.1 404 Not Found
 content-type: text/html
-content-length: 1071
+content-length: 1127
 date: Thu, 29 Oct 2026 09:13:36 GMT
 ```
 
@@ -251,12 +251,12 @@ The [`<title>`][title element] is in our layout, so we need to get a title from 
 Update **server/views/layout.js** so that `layout` also takes an options object with a `title`.
 
 **server/views/layout.js**
-```JavaScript{hl_lines="2-3 9"}
+```JavaScript{hl_lines="2-4 10"}
 // Placeholder: this will need to change when we add flash messages, sign-in and nav highlighting
 export function layout(content, page = {}) {
     const title = page.title ? `${page.title} | Bookshelves` : "Bookshelves";
 
-    const document = `
+    return `
         <!DOCTYPE html>
         <html lang="en">
             <head>
@@ -267,29 +267,28 @@ export function layout(content, page = {}) {
                 <link rel="icon" href="/assets/icon.svg">
             </head>
             <body>
-            <header class="secondary">
-                <a href="/" class="brand"><img src="/assets/icon.svg" alt=""> Bookshelves</a>
-                <nav>
-                    <a href="/books">books</a>
-                </nav>
-            </header>
-            <main>
-            ${content}
-            </main>
-            <footer class="secondary">
-                <p>
-                    &copy; Bookshelves developers
-                </p>
-            </footer>
+                <header class="secondary">
+                    <a href="/" class="brand"><img src="/assets/icon.svg" alt=""> Bookshelves</a>
+                    <nav>
+                        <a href="/books">books</a>
+                    </nav>
+                </header>
+                <main>
+                ${content}
+                </main>
+                <footer class="secondary">
+                    <p>
+                        &copy; Bookshelves developers
+                    </p>
+                </footer>
             </body>
         </html>
     `;
-    return document;
 }
 ```
 
 `layout` now takes a second argument, an options object we call `page`, with a default of `{}`.
-Before building the document, we work out the title with the [conditional operator][conditional operator] (`? :`).
+Before returning the document, we work out the title with the [conditional operator][conditional operator] (`? :`).
 If the page has a `title`, our title is that title, a `|` and **Bookshelves**.
 If it doesn't, our title is just **Bookshelves**.
 Then the `<title>` element only needs `${title}`.
@@ -617,7 +616,7 @@ Keep the **network** panel open.
 ```http
 HTTP/1.1 404 Not Found
 content-type: text/html
-content-length: 1083
+content-length: 1139
 date: Thu, 29 Oct 2026 09:13:48 GMT
 ```
 
