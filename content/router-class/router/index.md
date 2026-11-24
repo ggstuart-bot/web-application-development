@@ -475,7 +475,7 @@ After that, we will replace our logging placeholder with our first *middleware*.
 
 > Undo your changes, so that your code matches the starting point of the next exercise.
 
-[previous exercise]: sqlite-and-models/books-page/
+[previous exercise]: sqlite-and-models/database/
 [if chain]: sqlite-and-models/books-page/#if-chain
 [technical debt]: views-and-controllers/controllers/#technical-debt
 [books]: http://localhost:8000/books
