@@ -525,7 +525,7 @@ Each guard goes first on its routes, because it only needs to know who you are.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="25"}
+```plaintext {linenos=false, hl_lines="24"}
 my-app/
 ├── .vscode/
 │   └── settings.json

@@ -1183,7 +1183,7 @@ We saw that hiding the buttons is not enough, and added `mayUseShelf` to every r
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="61-63"}
+```plaintext {linenos=false, hl_lines="64-66"}
 my-app/
 ├── .vscode/
 │   └── settings.json
