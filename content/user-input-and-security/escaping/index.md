@@ -1,7 +1,7 @@
 ---
 type: exercise
 title: Escape everything
-weight: 3
+weight: 4
 author: Dr Graeme Stuart
 ---
 
@@ -11,7 +11,7 @@ We will write an `html` helper that *escapes* every value we put into our pages.
 <!--more-->
 
 > You should have a working search from the [previous exercise][previous exercise].
-> Your database should hold the 20 books we seeded. If you have been experimenting, run `deno task db:reset` to get back to 20.
+> Your database should hold all 1,000 books. If you have been experimenting, run `deno task db:reset` to get them back.
 > Before you start, make sure everything is committed to your git repository.
 
 ## Learning objectives
@@ -201,7 +201,7 @@ Add jsr:@std/html@1.0.7
 }
 ```
 
-It does exactly what the table above says.
+Nothing uses it yet, but it does exactly what the table above says.
 
 ```JavaScript {linenos=false}
 escape(`<strong>"Hobbit" & 'friends'</strong>`)
@@ -270,6 +270,10 @@ export function html(strings, ...values) {
 - [`reduce`][reduce] builds one result from an array. It calls our arrow function once for each string, passing in the result so far as `output`, the current `string` and its `index`. Whatever the function returns becomes the next `output`. The `""` at the end is where `output` starts.
 - Each time, we add the string and then the escaped value with the same index. After the last string there is no value, so `values[index]` is `undefined`, and `toHTML` adds nothing.
 
+The text we write in the template is never escaped, only the values.
+Nothing uses `html` yet.
+
+
 ### Escaping the search box {#search-box}
 
 The search box is where our quote problem started, so let's protect it first.
@@ -304,40 +308,83 @@ In the page source, every `"` and `'` is now a character reference.
 <input id="q" type="search" name="q" value="&quot; autofocus onfocus=&quot;alert(&#39;value&#39;)">
 ```
 
-But our other templates still aren't escaped: try [`<script>alert('oops')</script>`][oops] and you still get two alerts.
+For now, `html` returns a plain string, so the home page and the books page can still put the form in their own templates.
+But those templates still aren't escaped: try [`<script>alert('oops')</script>`][oops] and you still get two alerts.
 
 ## Escaping the book cards {#cards}
 
 Users don't only reach our pages through the search.
-Our book titles and authors come from the database, and one day our users will be adding books.
+Our book titles and authors come from the database, not from our code, and one day our users will be adding books.
+Anyone who can add a book could otherwise put HTML in its title.
 
-Update **server/views/partials/bookCard.js**.
+Update `bookCard` in **server/views/books.js**.
 
-**server/views/partials/bookCard.js**
-```JavaScript{hl_lines="1 4"}
-import { html } from "../../tools/html.js";
+**server/views/books.js**
+```JavaScript{hl_lines="1 27"}
+import { html } from "../tools/html.js";
+import { searchForm } from "./partials/searchForm.js";
 
-export function bookCard(book) {
+const DEFAULT_COVER = "/assets/default-cover.svg";
+
+export function booksView(ctx) {
+    const { data: { title, books, q, page, pageCount } } = ctx;
+    const results = books.length
+        ? `<ul class="grid">${books.map(bookCard).join("")}</ul>`
+        : `<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
+
+    return `
+        <section>
+            <header>
+                <h1>${title}</h1>
+                ${q ? `<p><a href="/books">show all books</a></p>` : ""}
+            </header>
+            ${searchForm(q)}
+            ${results}
+            ${pagination(q, page, pageCount)}
+        </section>
+    `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
     return html`
         <li class="card book">
-            <img class="cover" src="${book.coverUrl}" alt="" width="200" height="300" loading="lazy">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
             <div>
                 <h2>${book.title}</h2>
-                <p>${book.author} (${book.year})</p>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
             </div>
         </li>
     `;
 }
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(q, page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="${pageUrl(q, page - 1)}" rel="prev">previous</a>` : ""}
+            <a href="${pageUrl(q, page)}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="${pageUrl(q, page + 1)}" rel="next">next</a>` : ""}
+        </nav>`;
+}
+
+// Only keep q in the link if there's a search
+function pageUrl(q, page) {
+    const params = q ? { q, page } : { page };
+    return `/books?${new URLSearchParams(params)}`;
+}
 ```
 
-Refresh [http://localhost:8000/books][books].
+`html` still returns a plain string, so the books page still joins the cards into one string.
+
+Visit [http://localhost:8000/books?q=angels][q angels].
 Nothing looks different, but view the page source and find **Angels & Demons**.
 
 ```html
 <h2>Angels &amp; Demons</h2>
 ```
 
-The `&` is now escaped, which is how it should always have been written.
+The `&` is now escaped, which is how it should always have been written, and the browser still shows it as `&`.
 
 ## HTML inside HTML {#nesting}
 
@@ -408,48 +455,20 @@ export function html(strings, ...values) {
 An object made from it holds a string that we know is safe HTML.
 
 - `html` now wraps its result with `new SafeHTML(...)`.
-- In `toHTML`, a `SafeHTML` value is passed through as it is, checked with [`instanceof`][instanceof] just as in our router's error handling. Everything else is still escaped.
+- In `toHTML`, a `SafeHTML` value is passed through as it is, checked with [`instanceof`][instanceof] just as in our error handling. Everything else is still escaped.
 - [`toString`][tostring] is a special method. JavaScript calls it whenever an object is used as a string, for example in a plain template literal, so code that expects a string still works.
 
 Refresh [http://localhost:8000/][localhost].
 The form is back.
+The books page doesn't use `html` around its cards yet, but `join` and its plain templates still work, because of `toString`.
 
 ## Arrays of HTML {#arrays}
 
-Now let's convert the books list.
-Update **server/views/books.js**.
+Now let's convert the books list, which has a problem of its own.
+Each card is now `SafeHTML`, but `join` turns the whole array into one plain string, and `html` would escape that string, cards and all.
+The page would show the cards' HTML as text, starting with `&lt;li class=&quot;card book&quot;&gt;`.
 
-**server/views/books.js**
-```JavaScript{hl_lines="1 8-9"}
-import { html } from "../tools/html.js";
-import { bookCard } from "./partials/bookCard.js";
-import { searchForm } from "./partials/searchForm.js";
-
-export function booksView(ctx) {
-    const { data: { title, books, q } } = ctx;
-    const results = books.length
-        ? html`<ul class="grid">${books.map(bookCard).join("")}</ul>`
-        : html`<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
-
-    return `
-        <section>
-            <header>
-                <h1>${title}</h1>
-                ${q ? `<p><a href="/books">show all books</a></p>` : ""}
-            </header>
-            ${searchForm(q)}
-            ${results}
-        </section>
-    `;
-}
-```
-
-Refresh [http://localhost:8000/books][books].
-The cards have gone, and their HTML is shown as text instead, starting with `&lt;li class=&quot;card book&quot;&gt;`.
-
-Each `bookCard` is now `SafeHTML`, but `join` turns the whole array into one plain string, and plain strings get escaped.
 Rather than joining the cards ourselves, we will let `html` handle arrays.
-
 Update **server/tools/html.js**.
 
 **server/tools/html.js**
@@ -484,16 +503,17 @@ export function html(strings, ...values) {
 If it is, we turn each item into HTML with `toHTML` itself, so each card is passed through as safe and anything else is escaped.
 Then we join them, with a new line between each one.
 
-Now remove the `join` from **server/views/books.js**.
+Now update **server/views/books.js** to use `html` for the list, without the `join`.
 
 **server/views/books.js**
-```JavaScript{hl_lines="8"}
+```JavaScript{hl_lines="9-10"}
 import { html } from "../tools/html.js";
-import { bookCard } from "./partials/bookCard.js";
 import { searchForm } from "./partials/searchForm.js";
 
+const DEFAULT_COVER = "/assets/default-cover.svg";
+
 export function booksView(ctx) {
-    const { data: { title, books, q } } = ctx;
+    const { data: { title, books, q, page, pageCount } } = ctx;
     const results = books.length
         ? html`<ul class="grid">${books.map(bookCard)}</ul>`
         : html`<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
@@ -506,31 +526,141 @@ export function booksView(ctx) {
             </header>
             ${searchForm(q)}
             ${results}
+            ${pagination(q, page, pageCount)}
         </section>
     `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return html`
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(q, page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="${pageUrl(q, page - 1)}" rel="prev">previous</a>` : ""}
+            <a href="${pageUrl(q, page)}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="${pageUrl(q, page + 1)}" rel="next">next</a>` : ""}
+        </nav>`;
+}
+
+// Only keep q in the link if there's a search
+function pageUrl(q, page) {
+    const params = q ? { q, page } : { page };
+    return `/books?${new URLSearchParams(params)}`;
 }
 ```
 
 Refresh [http://localhost:8000/books][books].
-The cards are back.
+The cards are all still there.
 
 The message is now escaped too.
 The plain template literal inside it builds the message as a string, and the `html` around it escapes that string.
 Try [`<script>alert('oops')</script>`][oops]: there is only one alert now, from the heading.
 
-## The views {#views}
+## The page links {#page-links}
+
+Our page links are HTML too.
+Update `pagination` in **server/views/books.js**.
+
+**server/views/books.js**
+```JavaScript{hl_lines="41-42 44"}
+import { html } from "../tools/html.js";
+import { searchForm } from "./partials/searchForm.js";
+
+const DEFAULT_COVER = "/assets/default-cover.svg";
+
+export function booksView(ctx) {
+    const { data: { title, books, q, page, pageCount } } = ctx;
+    const results = books.length
+        ? html`<ul class="grid">${books.map(bookCard)}</ul>`
+        : html`<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
+
+    return `
+        <section>
+            <header>
+                <h1>${title}</h1>
+                ${q ? `<p><a href="/books">show all books</a></p>` : ""}
+            </header>
+            ${searchForm(q)}
+            ${results}
+            ${pagination(q, page, pageCount)}
+        </section>
+    `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return html`
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(q, page, pageCount) {
+    if (pageCount <= 1) return "";
+    return html`<nav aria-label="Pagination">
+            ${page > 1 ? html`<a href="${pageUrl(q, page - 1)}" rel="prev">previous</a>` : ""}
+            <a href="${pageUrl(q, page)}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? html`<a href="${pageUrl(q, page + 1)}" rel="next">next</a>` : ""}
+        </nav>`;
+}
+
+// Only keep q in the link if there's a search
+function pageUrl(q, page) {
+    const params = q ? { q, page } : { page };
+    return `/books?${new URLSearchParams(params)}`;
+}
+```
+
+The previous and next links use `html`, [nested inside][nesting] the `html` around the `<nav>`, so they pass through as safe HTML rather than being escaped as text.
+
+`pageUrl` already [encodes the search][page url] with `URLSearchParams`, so a search can't break out of a link.
+But every value in our HTML should be escaped all the same.
+
+Visit [http://localhost:8000/books?q=of+the&page=2][q of the page 2], view the page source and find the links.
+
+```html {linenos=false}
+            <nav aria-label="Pagination">
+            <a href="/books?q=of+the&amp;page=1" rel="prev">previous</a>
+            <a href="/books?q=of+the&amp;page=2" aria-current="page">page 2 of 3</a>
+            <a href="/books?q=of+the&amp;page=3" rel="next">next</a>
+        </nav>
+```
+
+`pageUrl` returns a plain string, so our `html` helper escaped the `&` between the parameters as `&amp;`.
+That is exactly what we want: `&amp;` is the correct way to write `&` in an HTML attribute, and the browser reads it as `&`, so the link goes to the same URL.
+
+## The books view {#views}
 
 The heading is in the template that the books view returns.
 Update **server/views/books.js** again.
 
 **server/views/books.js**
-```JavaScript{hl_lines="11 15"}
+```JavaScript{hl_lines="12 16"}
 import { html } from "../tools/html.js";
-import { bookCard } from "./partials/bookCard.js";
 import { searchForm } from "./partials/searchForm.js";
 
+const DEFAULT_COVER = "/assets/default-cover.svg";
+
 export function booksView(ctx) {
-    const { data: { title, books, q } } = ctx;
+    const { data: { title, books, q, page, pageCount } } = ctx;
     const results = books.length
         ? html`<ul class="grid">${books.map(bookCard)}</ul>`
         : html`<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
@@ -543,35 +673,73 @@ export function booksView(ctx) {
             </header>
             ${searchForm(q)}
             ${results}
+            ${pagination(q, page, pageCount)}
         </section>
     `;
 }
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return html`
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(q, page, pageCount) {
+    if (pageCount <= 1) return "";
+    return html`<nav aria-label="Pagination">
+            ${page > 1 ? html`<a href="${pageUrl(q, page - 1)}" rel="prev">previous</a>` : ""}
+            <a href="${pageUrl(q, page)}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? html`<a href="${pageUrl(q, page + 1)}" rel="next">next</a>` : ""}
+        </nav>`;
+}
+
+// Only keep q in the link if there's a search
+function pageUrl(q, page) {
+    const params = q ? { q, page } : { page };
+    return `/books?${new URLSearchParams(params)}`;
+}
 ```
 
+The search form, the results and the page links are already safe HTML, so they are nested as they are.
 The "show all books" link is HTML we wrote, so it uses `html` too, to keep it safe inside the outer template.
 
-The not-found view has no values in it yet, but we will make it safe now, so nobody has to remember later.
-Update **server/views/notFound.js**.
+Try [`<script>alert('oops')</script>`][oops] again.
+No alert, and the heading shows the search as text.
+But [`</title><script>alert('title')</script>`][title attack] still gives one alert, from the `<head>`, because the layout doesn't use `html` yet.
 
-**server/views/notFound.js**
-```JavaScript{hl_lines="1 4"}
+## The error view {#error-view}
+
+The error view's title and message are our own text for now.
+A later message could include something from the request, so we will make it safe now, and nobody has to remember later.
+Update **server/views/error.js**.
+
+**server/views/error.js**
+```JavaScript{hl_lines="1 5"}
 import { html } from "../tools/html.js";
 
-export function notFoundView() {
+export function errorView(ctx) {
+    const { data: { title, message } } = ctx;
     return html`
         <section>
             <header>
-                <h1>Not found</h1>
-                <p>The requested resource was not found.</p>
+                <h1>${title}</h1>
+                <p>${message}</p>
             </header>
         </section>
     `;
 }
 ```
 
-Try [`<script>alert('oops')</script>`][oops] again.
-No alert, and the heading shows the search as text.
-But [`</title><script>alert('title')</script>`][title attack] still gives one alert, from the `<head>`.
+Every view now returns safe HTML.
+Nothing changes on the not-found page or the server error page: visit [http://localhost:8000/books?page=100][page 100] to check.
 
 ## The layout {#layout-html}
 
@@ -579,7 +747,7 @@ The last template is the layout, which writes the title.
 Update **server/views/layout.js**.
 
 **server/views/layout.js**
-```JavaScript{hl_lines="1 8 19-32 40-42"}
+```JavaScript{hl_lines="1 8 40-42"}
 import { html } from "../tools/html.js";
 
 // Placeholder: this will need to change when we add flash messages and sign-in
@@ -625,9 +793,8 @@ function navLink(href, content, path) {
 }
 ```
 
-- The layout returns `html` straight away, so we no longer need the `document` variable.
-- The `content` from the view is already `SafeHTML`, so it goes in as it is.
-- `navLink` uses `html` too. The tidy-up of its line breaks, and of the indentation under `<body>`, is just formatting.
+- The views already return `SafeHTML`, so the `content` from the view goes in as it is. That is why the layout comes last.
+- `navLink` uses `html` too, so its link isn't escaped in the nav. Its line is now too long, so it is split over three lines.
 
 `render` doesn't need to change.
 It passes the layout's result to `new Response`, which uses it as a string, through `toString`.
@@ -658,11 +825,11 @@ Because the search lives in the URL, an attacker only needs someone to click a l
 
 We fixed it by escaping by default.
 Our `html` tag function escapes every value, and marks its own output as safe, so templates can be nested and arrays of cards still work.
-Every view, every partial and the layout now use it.
+Every view, the search form partial and the layout now use it.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="25"}
+```plaintext {linenos=false, hl_lines="26"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -671,15 +838,17 @@ my-app/
 │   ├── BOOKS-ATTRIBUTION.md
 │   └── books.json
 ├── public/
+│   ├── default-cover.svg
 │   ├── icon.svg
 │   └── styles.css
 ├── server/
 │   ├── controllers/
 │   │   ├── books.js
+│   │   ├── errors.js
 │   │   ├── home.js
-│   │   ├── notFound.js
 │   │   └── static.js
 │   ├── middleware/
+│   │   ├── errors.js
 │   │   └── logging.js
 │   ├── models/
 │   │   ├── books.js
@@ -691,12 +860,11 @@ my-app/
 │   │   └── router.js
 │   ├── views/
 │   │   ├── partials/
-│   │   │   ├── bookCard.js
 │   │   │   └── searchForm.js
 │   │   ├── books.js
+│   │   ├── error.js
 │   │   ├── home.js
-│   │   ├── layout.js
-│   │   └── notFound.js
+│   │   └── layout.js
 │   └── main.js
 ├── tasks/
 │   ├── db-create.js
@@ -712,7 +880,7 @@ my-app/
 These are questions to investigate, not changes to keep.
 
 - Search for `<strong>Hobbit</strong>` and view the page source. Find all four places the search appears. Is each one escaped the same way?
-- Two plain template literals are left: the title in **server/views/layout.js** and the message in **server/views/books.js**, and the controller builds `Books matching "${q}"` with one too. Why are they still safe?
+- A few plain template literals are left: the title in **server/views/layout.js**, the message and `pageUrl` in **server/views/books.js**, and the controller builds `Books matching "${q}"` with one too. Why are they still safe?
 - Try your own attacks from each stage. Can you find one that still works?
 - What would happen if a book's title in the database contained `<script>`? Which commit protects us from that?
 
@@ -748,3 +916,8 @@ These are questions to investigate, not changes to keep.
 [instanceof]: router-class/router/#catch
 [tostring]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString
 [is array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray
+[q angels]: http://localhost:8000/books?q=angels
+[q of the page 2]: http://localhost:8000/books?q=of+the&page=2
+[page 100]: http://localhost:8000/books?page=100
+[page url]: user-input-and-security/search/#page-url
+[nesting]: user-input-and-security/escaping/#nesting

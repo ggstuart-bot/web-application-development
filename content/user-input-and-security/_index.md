@@ -9,6 +9,6 @@ Anything a user types is untrusted, so security is the major theme.
 
 <!--more-->
 
-We will add a search form that sends its query to the server in the URL, and read it with `searchParams`.
-Then we will see why everything we write into a page must be escaped, and protect every view with an `html` helper.
-The unit ends with paging through the books, another use of the query string.
+We will start by paging through the books, with a page number that the server reads from the query string in the URL.
+Then we will add a search form that sends its query to the server in the same way.
+Finally, we will see why everything we write into a page must be escaped, and protect every view with an `html` helper.
