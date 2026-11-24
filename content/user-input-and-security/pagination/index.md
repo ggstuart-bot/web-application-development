@@ -716,10 +716,10 @@ A [regular expression][regex] such as `/^[1-9]\d*$/` would also work, but that i
 [math max]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max
 [nesting]: user-input-and-security/escaping/#nesting
 [aria-current]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-current
-[nav link]: router-class/middleware/#nav-link
+[nav link]: router-class/one-context/#nav-link
 [rel]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/rel
 [aria-label]: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-label
-[nav styles]: router-class/middleware/#nav-styles
+[nav styles]: router-class/one-context/#nav-pills
 [page 63]: http://localhost:8000/books?page=63
 [page 64]: http://localhost:8000/books?page=64
 [hateoas]: https://en.wikipedia.org/wiki/HATEOAS
