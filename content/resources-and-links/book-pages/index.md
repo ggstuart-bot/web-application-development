@@ -134,16 +134,24 @@ Here is a demonstration, with the results in comments.
 ```JavaScript
 const pattern = new URLPattern({ pathname: "/books/:bookId" });
 
-pattern.test("http://localhost:8000/books/42"); // true
 pattern.test("http://localhost:8000/books"); // false
+pattern.test("http://localhost:8000/books/"); // false
+pattern.test("http://localhost:8000/books/42"); // true
+pattern.test("http://localhost:8000/books/anything"); // true
+pattern.test("http://localhost:8000/books/42/"); // false
 pattern.test("http://localhost:8000/books/42/more"); // false
 
 const match = pattern.exec("http://localhost:8000/books/42");
 match.pathname.groups; // { bookId: "42" }
+
+pattern.exec("http://localhost:8000/books/anything").pathname.groups;
+// { bookId: "anything" }
 ```
 
-- `:bookId` matches one part of the path, up to the next `/`, whatever it is.
 - [`test`][url pattern test] tells us whether a URL matches, which is what our router already uses.
+- The pattern matches paths beginning with `/books/`.
+- `:bookId` matches one part of the path, up to the next `/`, whatever it is.
+- The pattern doesn't include any `/` characters after `:bookId`.
 - [`exec`][url pattern exec] tells us *how* it matched. Its `pathname.groups` has a property for each named part, holding the text that it matched.
 
 Notice that `bookId` is the *string* `"42"`, not a number.
@@ -688,10 +696,11 @@ There are 1,000 books, with ids from 1 to 1,000, so `getBookById(1001)` finds no
 `Number("01")`, `Number("1.0")` and `Number("0x1")` are all `1`, so all three addresses show **The Hunger Games**.
 The same idea as the stricter page number would turn them away.
 
-`/books/:bookId` doesn't match **/books/1/**, because `:bookId` can't be empty, so the router finds no route and throws its own `NotFoundError`.
+`/books/:bookId` doesn't match **/books/1/**, because the forward slash is not in the pattern, so the router finds no matching route and throws its own `NotFoundError`.
 
 The `*` in `/assets/*` is a group too, but it has no name, so it is numbered instead.
 For **/assets/styles.css**, `ctx.params` is `{ "0": "styles.css" }`.
+Patterns with additional wildcards would add numbered entries in order of appearance. 
 
 </details>
 
