@@ -1,17 +1,17 @@
 ---
 type: exercise
 title: Search for books
-weight: 2
+weight: 3
 author: Dr Graeme Stuart
 ---
 
 In this exercise we will add a search form, so our users can find books by title or author.
-It is the first time our application accepts input from its users.
+It is the first time our application accepts input that our users type.
 
 <!--more-->
 
-> You should have a router and a `withLogs` middleware from the [previous exercise][previous exercise].
-> Your database should hold the 20 books we seeded. If you have been experimenting, run `deno task db:reset` to get back to 20.
+> You should have a books page that shows one page at a time, from the [previous exercise][previous exercise].
+> Your database should hold all 1,000 books. If you have been experimenting, run `deno task db:reset` to get them back.
 > Before you start, make sure everything is committed to your git repository.
 
 ## Learning objectives
@@ -20,13 +20,14 @@ The search is a new *feature*, and our first *user input*.
 We will build it one small step at a time, checking the browser after each one.
 By the end of this exercise you should be able to:
 
-- Explain what a *query string* is, and how a form builds one
+- Explain how a form builds a *query string*
 - Write an HTML search form with a label, an input and a button
-- Read a value from the query string with `url.searchParams`
 - Filter rows in SQL with `LIKE`, and explain why we pass the user's search as a parameter
-- Use *falsy* values, such as an empty string or `0`, in a conditional
+- Build a query string with `URLSearchParams`, so that our page links keep the search
+- Move a piece of a page that two views share into a *partial*
+- Lay out a form with a CSS grid
 
-## The query string {#query-string}
+## A search form {#form}
 
 Start the server in development mode.
 
@@ -34,28 +35,17 @@ Start the server in development mode.
 deno task dev
 ```
 
-Now visit [http://localhost:8000/books?q=hobbit][q hobbit].
-
-The part of the URL after the `?` is the [*query string*][url search].
-It holds *parameters*, written as `name=value`, so this one has a parameter called `q` with the value `hobbit`.
-Several parameters are joined with `&`, as in `?q=hobbit&lang=en`.
-
-Our page hasn't changed: it still shows all 20 books.
-The router matches on the path, `/books`, and nothing reads the query string yet.
-Our `withLogs` middleware [logs `url.pathname`][with logs], which doesn't include the query string, so the terminal only says `GET /books`.
-
-We want our users to type a search, not edit the URL, so let's give them a form.
-
-## A search form {#form}
+We already read the page number from the [query string][query string].
+A search can go in the query string too, but we want our users to type it, not edit the URL, so let's give them a form.
 
 Update **server/views/books.js** to add a search form to the books page.
 
 **server/views/books.js**
-```JavaScript{hl_lines="11 19-29"}
-import { bookCard } from "./partials/bookCard.js";
+```JavaScript{hl_lines="11 43-53"}
+const DEFAULT_COVER = "/assets/default-cover.svg";
 
 export function booksView(ctx) {
-    const { data: { books } } = ctx;
+    const { data: { books, page, pageCount } } = ctx;
 
     return `
         <section>
@@ -66,8 +56,32 @@ export function booksView(ctx) {
             <ul class="grid">
                 ${books.map(bookCard).join("")}
             </ul>
+            ${pagination(page, pageCount)}
         </section>
     `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return `
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="/books?page=${page - 1}" rel="prev">previous</a>` : ""}
+            <a href="/books?page=${page}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="/books?page=${page + 1}" rel="next">next</a>` : ""}
+        </nav>`;
 }
 
 function searchForm() {
@@ -83,7 +97,8 @@ function searchForm() {
 }
 ```
 
-`searchForm` is a small function in the same module, just like `navLink` in our layout.
+`searchForm` is a small function in the same module, just like `pagination`.
+Only the books page uses it, so it stays in **books.js** for now.
 We call it inside the template with `${searchForm()}`.
 
 This is our first form, so let's look at each part.
@@ -107,7 +122,7 @@ The URL is `/books?q=harry+potter`.
 A space isn't allowed in a URL, so the browser *encodes* it as `+`.
 Other characters are encoded too, such as `"` which becomes `%22`.
 
-The page still shows all 20 books, because our server still ignores the query string.
+The page still shows the first 16 of all our books, because our server doesn't read `q` yet.
 
 ## Searching the books {#search}
 
@@ -119,7 +134,7 @@ These two files depend on each other, so update both before you refresh.
 Update **server/models/books.js**, replacing `getBooks` with `searchBooks`.
 
 **server/models/books.js**
-```JavaScript{hl_lines="11-12 15-16"}
+```JavaScript{hl_lines="11 14 17 20 23-24 27-28"}
 import { db } from "./db.js";
 
 export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
@@ -130,17 +145,28 @@ export function createBook({ title, author, year, thumbnailUrl, coverUrl }) {
     `).get({ title, author, year, thumbnailUrl, coverUrl });
 }
 
-// Placeholder: this will need to change when we add pagination
-export function searchBooks(q) {
+export function searchBooks(q, page, pageSize) {
     return db.prepare(`
         SELECT id, title, author, year, thumbnailUrl, coverUrl FROM books
         WHERE title LIKE :pattern OR author LIKE :pattern
-    `).all({ pattern: `%${q}%` });
+        ORDER BY title
+        LIMIT :limit OFFSET :offset
+    `).all({ pattern: `%${q}%`, limit: pageSize, offset: (page - 1) * pageSize });
+}
+
+function countBooks(q) {
+    return db.prepare(`
+        SELECT count(*) AS count FROM books
+        WHERE title LIKE :pattern OR author LIKE :pattern
+    `).get({ pattern: `%${q}%` }).count;
+}
+
+export function countPages(q, pageSize) {
+    return Math.ceil(countBooks(q) / pageSize);
 }
 ```
 
-> The old placeholder has gone, because this is the search it was waiting for.
-> The new one is for pagination: with all 1,000 books, one search could match far too many.
+> The placeholder has gone, because this is the search it was waiting for.
 
 The `WHERE` clause keeps only the rows we want.
 
@@ -149,7 +175,10 @@ The `WHERE` clause keeps only the rows we want.
 - `LIKE` ignores the difference between capital and small letters, so we don't need the [`toLowerCase`][lower case] we used in the book search.
 - `OR` keeps a row if *either* test is true, like the [`||`][logical or] in the book search, so we search both the title and the author.
 
-We use the same *named parameter*, `:pattern`, twice, and pass its value to `.all()`, just as `createBook` does with its [named parameters][named parameters].
+We use the same *named parameter*, `:pattern`, twice, and pass its value alongside `:limit` and `:offset`.
+
+`countBooks` uses the same `WHERE` clause, so it counts only the books that match the search, and `countPages` passes the search on to it.
+So a search has its own number of pages.
 
 ### Why a parameter matters {#parameters}
 
@@ -163,55 +192,73 @@ So, whatever our users type, they can only ever change what we search *for*, not
 > Pasting user input into SQL is how [SQL injection][sql injection] attacks happen.
 > Parameters are the standard defence. See the [OWASP advice on query parameterisation][owasp params] if you'd like to know more.
 
-### Reading the query string {#search-params}
+### Reading the search {#search-params}
 
 Now update **server/controllers/books.js**.
 
 **server/controllers/books.js**
-```JavaScript{hl_lines="1 6-9"}
-import { searchBooks } from "../models/books.js";
+```JavaScript{hl_lines="1 10 13 17 19"}
+import { countPages, searchBooks } from "../models/books.js";
 import { render } from "../tools/render.js";
+import { NotFoundError } from "../tools/errors.js";
 import { booksView } from "../views/books.js";
+
+const PAGE_SIZE = 16;
 
 export function booksController(ctx) {
     const { url } = ctx;
     const q = url.searchParams.get("q") ?? "";
+    const pageParam = url.searchParams.get("page");
+    const page = pageParam === null ? 1 : Number(pageParam);
+    const pageCount = Math.max(1, countPages(q, PAGE_SIZE));
+    if (!Number.isSafeInteger(page) || page < 1 || page > pageCount) {
+        throw new NotFoundError(`Page ${pageParam} not found`);
+    }
     ctx.data.q = q;
-    ctx.data.books = searchBooks(q);
+    ctx.data.page = page;
+    ctx.data.books = searchBooks(q, page, PAGE_SIZE);
+    ctx.data.pageCount = pageCount;
     ctx.data.title = "Books";
     return render(booksView, ctx);
 }
 ```
 
-The router already put the `url` on `ctx` [for its own use][router url], so we can take it out of `ctx` here too, with no other changes.
+We read `q` just as we [read the page number][page number], with `url.searchParams.get`.
+The value comes back already decoded, so `harry+potter` becomes `"harry potter"`.
+If there is no `q` parameter at all, `get` gives us `null`, and we use [`??`][nullish coalescing] to fall back to an empty string, just as we did with `prompt` in the book search.
 
-[`url.searchParams`][searchparams] reads the query string for us.
-
-- [`get("q")`][usp get] gives us the value of the `q` parameter as a string, already decoded, so `harry+potter` becomes `"harry potter"`.
-- If there is no `q` parameter at all, `get` gives us `null`. We use [`??`][nullish coalescing] to fall back to an empty string, just as we did with `prompt` in the book search.
-
-We pass `q` to `searchBooks`, and also put it on `ctx.data`, ready for the view.
+We pass `q` to `searchBooks` and `countPages`, and also put it on `ctx.data`, ready for the view.
 
 Save both files, then try some searches.
 
-- [http://localhost:8000/books?q=hobbit][q hobbit] shows one book, **The Hobbit**.
-- [http://localhost:8000/books?q=tolkien][q tolkien] shows two, because it matches the author too.
-- [http://localhost:8000/books?q=harry+potter][q harry potter] shows three.
-- [http://localhost:8000/books][books] still shows all 20. With no `q`, the pattern is `%%`, which matches everything.
+- [http://localhost:8000/books?q=hobbit][q hobbit] shows three books, including **The Hobbit**.
+- [http://localhost:8000/books?q=tolkien][q tolkien] shows eight, because it matches the author too.
+- [http://localhost:8000/books?q=harry+potter][q harry potter] shows nine.
+- [http://localhost:8000/books][books] still shows **page 1 of 63**. With no `q`, the pattern is `%%`, which matches everything.
 
 Use the form too.
 It works, but after each search the box is empty again.
+
+### Losing the search {#lost-search}
+
+Now visit [http://localhost:8000/books?q=the][q the].
+It says **page 1 of 29**, because only the matching books are counted.
+
+Click **next**.
+The address bar says `/books?page=2`, and we are on **page 2 of 63**.
+Our page links only include the page, so following one loses the search.
+We will fix the box first, then the links.
 
 ## Keeping the search in the box {#value}
 
 Update **server/views/books.js** to pass the search to the form.
 
 **server/views/books.js**
-```JavaScript{hl_lines="4 11 19 24"}
-import { bookCard } from "./partials/bookCard.js";
+```JavaScript{hl_lines="4 11 43 48"}
+const DEFAULT_COVER = "/assets/default-cover.svg";
 
 export function booksView(ctx) {
-    const { data: { books, q } } = ctx;
+    const { data: { books, q, page, pageCount } } = ctx;
 
     return `
         <section>
@@ -222,8 +269,32 @@ export function booksView(ctx) {
             <ul class="grid">
                 ${books.map(bookCard).join("")}
             </ul>
+            ${pagination(page, pageCount)}
         </section>
     `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return `
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="/books?page=${page - 1}" rel="prev">previous</a>` : ""}
+            <a href="/books?page=${page}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="/books?page=${page + 1}" rel="next">next</a>` : ""}
+        </nav>`;
 }
 
 function searchForm(q) {
@@ -255,38 +326,44 @@ Our page should say what it is showing.
 Update **server/controllers/books.js** to put the search in the title.
 
 **server/controllers/books.js**
-```JavaScript{hl_lines="10"}
-import { searchBooks } from "../models/books.js";
+```JavaScript{hl_lines="21"}
+import { countPages, searchBooks } from "../models/books.js";
 import { render } from "../tools/render.js";
+import { NotFoundError } from "../tools/errors.js";
 import { booksView } from "../views/books.js";
+
+const PAGE_SIZE = 16;
 
 export function booksController(ctx) {
     const { url } = ctx;
     const q = url.searchParams.get("q") ?? "";
+    const pageParam = url.searchParams.get("page");
+    const page = pageParam === null ? 1 : Number(pageParam);
+    const pageCount = Math.max(1, countPages(q, PAGE_SIZE));
+    if (!Number.isSafeInteger(page) || page < 1 || page > pageCount) {
+        throw new NotFoundError(`Page ${pageParam} not found`);
+    }
     ctx.data.q = q;
-    ctx.data.books = searchBooks(q);
+    ctx.data.page = page;
+    ctx.data.books = searchBooks(q, page, PAGE_SIZE);
+    ctx.data.pageCount = pageCount;
     ctx.data.title = q ? `Books matching "${q}"` : "Books";
     return render(booksView, ctx);
 }
 ```
 
 This is the [conditional operator][conditional operator] again.
-`q` is a string, not `true` or `false`, so how does it choose?
-
-In a condition, JavaScript treats a few values as false. These are called [*falsy*][falsy] values.
-They include `""` (an empty string), `0`, `null` and `undefined`.
-Anything else, including any non-empty string, counts as true.
-
+`q` is a string, and an empty string is [falsy][falsy], just like a missing year.
 So when `q` is `""`, the title is just **Books**, and when the user has searched, it is **Books matching "tolkien"**.
 
 Now update **server/views/books.js** to show the title, with a link back to all the books.
 
 **server/views/books.js**
 ```JavaScript{hl_lines="4 9-10"}
-import { bookCard } from "./partials/bookCard.js";
+const DEFAULT_COVER = "/assets/default-cover.svg";
 
 export function booksView(ctx) {
-    const { data: { title, books, q } } = ctx;
+    const { data: { title, books, q, page, pageCount } } = ctx;
 
     return `
         <section>
@@ -298,8 +375,32 @@ export function booksView(ctx) {
             <ul class="grid">
                 ${books.map(bookCard).join("")}
             </ul>
+            ${pagination(page, pageCount)}
         </section>
     `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return `
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="/books?page=${page - 1}" rel="prev">previous</a>` : ""}
+            <a href="/books?page=${page}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="/books?page=${page + 1}" rel="next">next</a>` : ""}
+        </nav>`;
 }
 
 function searchForm(q) {
@@ -317,9 +418,8 @@ function searchForm(q) {
 
 The `<h1>` now shows the title from `ctx.data`, so the heading and the browser tab always agree.
 
-The line under it uses the conditional operator inside the template.
+The line under it uses the conditional operator inside the template, just like our [page links][page links].
 When there is a search, it gives a paragraph with a link to [http://localhost:8000/books][books]. Otherwise, it gives an empty string, which adds nothing to the page.
-The paragraph is itself a template literal, inside the `${}` of another one.
 
 Visit [http://localhost:8000/books?q=tolkien][q tolkien].
 The heading and the tab both say **Books matching "tolkien"**, and **show all books** takes us back to every book.
@@ -334,10 +434,10 @@ Update **server/views/books.js**.
 
 **server/views/books.js**
 ```JavaScript{hl_lines="5-7 16"}
-import { bookCard } from "./partials/bookCard.js";
+const DEFAULT_COVER = "/assets/default-cover.svg";
 
 export function booksView(ctx) {
-    const { data: { title, books, q } } = ctx;
+    const { data: { title, books, q, page, pageCount } } = ctx;
     const results = books.length
         ? `<ul class="grid">${books.map(bookCard).join("")}</ul>`
         : `<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
@@ -350,8 +450,32 @@ export function booksView(ctx) {
             </header>
             ${searchForm(q)}
             ${results}
+            ${pagination(page, pageCount)}
         </section>
     `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return `
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="/books?page=${page - 1}" rel="prev">previous</a>` : ""}
+            <a href="/books?page=${page}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="/books?page=${page + 1}" rel="next">next</a>` : ""}
+        </nav>`;
 }
 
 function searchForm(q) {
@@ -381,12 +505,123 @@ Refresh [http://localhost:8000/books?q=zebra][q zebra].
 <p>No books match "zebra"</p>
 ```
 
+## Keeping the search in the page links {#page-url}
+
+Our page links still [lose the search][lost search].
+Each link needs the search *and* the page in its query string.
+Rather than build that three times, let's write one function for it.
+
+Update **server/views/books.js**.
+
+**server/views/books.js**
+```JavaScript{hl_lines="17 36 39-41 45-49"}
+const DEFAULT_COVER = "/assets/default-cover.svg";
+
+export function booksView(ctx) {
+    const { data: { title, books, q, page, pageCount } } = ctx;
+    const results = books.length
+        ? `<ul class="grid">${books.map(bookCard).join("")}</ul>`
+        : `<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
+
+    return `
+        <section>
+            <header>
+                <h1>${title}</h1>
+                ${q ? `<p><a href="/books">show all books</a></p>` : ""}
+            </header>
+            ${searchForm(q)}
+            ${results}
+            ${pagination(q, page, pageCount)}
+        </section>
+    `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return `
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(q, page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="${pageUrl(q, page - 1)}" rel="prev">previous</a>` : ""}
+            <a href="${pageUrl(q, page)}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="${pageUrl(q, page + 1)}" rel="next">next</a>` : ""}
+        </nav>`;
+}
+
+// Only keep q in the link if there's a search
+function pageUrl(q, page) {
+    const params = q ? { q, page } : { page };
+    return `/books?${new URLSearchParams(params)}`;
+}
+
+function searchForm(q) {
+    return `
+        <search>
+            <form method="GET" action="/books">
+                <label for="q">Search by title or author</label>
+                <input id="q" type="search" name="q" value="${q}">
+                <button>search</button>
+            </form>
+        </search>
+    `;
+}
+```
+
+`pagination` now takes the search, `q`, and gives it to `pageUrl` with each page number.
+
+[`URLSearchParams`][url search params] builds a query string from an object.
+It gives us the same kind of query string that our search form builds, with each value encoded.
+
+```JavaScript {linenos=false}
+`${new URLSearchParams({ q: "of the", page: 2 })}`
+```
+
+```plaintext {linenos=false}
+q=of+the&page=2
+```
+
+- `{ q, page }` uses [shorthand properties][shorthand], so it means `{ q: q, page: page }`.
+- With no search, `q` is `""`, which is falsy, so we leave it out and the link is just `/books?page=2`, as before.
+- Because the values are encoded, a search with spaces, `&` or quotes in it stays one value, and can't add parameters of its own.
+
+Visit [http://localhost:8000/books?q=of+the][q of the] and click **next**.
+The address bar says `/books?q=of+the&page=2`, and we are on **page 2 of 3** of the search.
+
+{{<figure src="images/search-page-2.webp" alt="The second page of results for the search of the, with the search in the address bar, the heading Books matching “of the” and the search box" caption="The search is kept on page 2.">}}
+
+{{<figure src="images/search-page-2-links.webp" alt="The bottom of the second page of search results, with previous, page 2 of 3 and next links, and the search still in the address bar" caption="The page links keep the search too.">}}
+
+View the page source and find the links.
+
+```html {linenos=false}
+            <nav aria-label="Pagination">
+            <a href="/books?q=of+the&page=1" rel="prev">previous</a>
+            <a href="/books?q=of+the&page=2" aria-current="page">page 2 of 3</a>
+            <a href="/books?q=of+the&page=3" rel="next">next</a>
+        </nav>
+```
+
+[http://localhost:8000/books][books], with no search, still links to `/books?page=2`.
+A search has its own number of pages, so [http://localhost:8000/books?q=of+the&page=3][q of the page 3] works, and [http://localhost:8000/books?q=of+the&page=4][q of the page 4] is not found.
+
 ## One form, two pages {#partial}
 
 Our home page would be a good place to search from, too.
-Two views need the same form, so it should be a [partial][partials], like `bookCard`.
+Two views need the same form, so it should be a *partial*: a piece of a page that more than one view uses.
 
-Create **searchForm.js** in the **server/views/partials** folder, and move `searchForm` into it.
+Create a **partials** folder in the **server/views** folder, and create **searchForm.js** in it.
+Move `searchForm` into it.
 
 **server/views/partials/searchForm.js**
 ```JavaScript
@@ -411,12 +646,13 @@ It is now exported, so other views can import it.
 Update **server/views/books.js** to import it, and remove the old `searchForm` from the bottom of the file.
 
 **server/views/books.js**
-```JavaScript{hl_lines="2"}
-import { bookCard } from "./partials/bookCard.js";
+```JavaScript{hl_lines="1"}
 import { searchForm } from "./partials/searchForm.js";
 
+const DEFAULT_COVER = "/assets/default-cover.svg";
+
 export function booksView(ctx) {
-    const { data: { title, books, q } } = ctx;
+    const { data: { title, books, q, page, pageCount } } = ctx;
     const results = books.length
         ? `<ul class="grid">${books.map(bookCard).join("")}</ul>`
         : `<p>${q ? `No books match "${q}"` : "No books found"}</p>`;
@@ -429,8 +665,38 @@ export function booksView(ctx) {
             </header>
             ${searchForm(q)}
             ${results}
+            ${pagination(q, page, pageCount)}
         </section>
     `;
+}
+
+function bookCard(book) {
+    const cover = book.coverUrl ?? DEFAULT_COVER;
+    return `
+        <li class="card book">
+            <img class="cover" src="${cover}" alt="" width="200" height="300" loading="lazy">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author}${book.year ? ` (${book.year})` : ""}</p>
+            </div>
+        </li>
+    `;
+}
+
+// Previous, the current page and next. Nothing at all if there's only one page
+function pagination(q, page, pageCount) {
+    if (pageCount <= 1) return "";
+    return `<nav aria-label="Pagination">
+            ${page > 1 ? `<a href="${pageUrl(q, page - 1)}" rel="prev">previous</a>` : ""}
+            <a href="${pageUrl(q, page)}" aria-current="page">page ${page} of ${pageCount}</a>
+            ${page < pageCount ? `<a href="${pageUrl(q, page + 1)}" rel="next">next</a>` : ""}
+        </nav>`;
+}
+
+// Only keep q in the link if there's a search
+function pageUrl(q, page) {
+    const params = q ? { q, page } : { page };
+    return `/books?${new URLSearchParams(params)}`;
 }
 ```
 
@@ -455,18 +721,22 @@ export function homeView() {
 ```
 
 Visit [http://localhost:8000/][localhost] and search for **orwell**.
-The form's `action` sends us to the books page, `/books?q=orwell`, with George Orwell's two books.
+The form's `action` sends us to the books page, `/books?q=orwell`, with George Orwell's three books.
 
 {{<figure src="images/search-home.webp" alt="The Bookshelves home page, with the heading Welcome to Bookshelves, a Find a book heading, and an empty search form labelled Search by title or author" caption="The home page now has the same search form.">}}
 
 ## Styling the form {#styles}
 
 Finally, let's make the form match the rest of our site.
-Update **public/styles.css**.
-First, give buttons the same look as our nav links.
+We will update **public/styles.css** three times.
+
+### Buttons {#buttons}
+
+The search button still has the browser's grey look.
+Give buttons the same look as our nav links, by adding `button` to the selector of the `nav a` rule.
 
 **public/styles.css**
-```css {linenostart="136" hl_lines="1-2"}
+```css {linenostart="141" hl_lines="1-2"}
 /* Buttons and nav links share one look. The current page is filled in */
 button,
 nav a {
@@ -476,17 +746,25 @@ nav a {
     background: none;
     color: inherit;
     text-decoration: none;
+    /* Hovering adds an accent underline */
     &:hover {
         text-decoration: underline var(--highlight) 2px;
     }
 }
 ```
 
-Then add these rules at the end of the file.
+The rule already has `background: none`, which clears the browser's grey, and `color: inherit`, which gives the button our page's text colour.
+So the button becomes an outlined pill, with the accent underline on hover, just like the nav links.
+The rule's comment now says it covers both.
+
+### A grid for forms {#form-grid}
+
+Browsers give inputs and buttons their own smaller font, and an input has a default width that can push it out of a narrow container.
+Add these rules at the end of the file.
 
 **public/styles.css**
-```css {linenostart="150"}
-/* An input may shrink below its default width, so the search row never overflows */
+```css {linenostart="156"}
+/* min-width: 0 lets an input shrink below its default width to fit its container */
 input {
     min-width: 0;
 }
@@ -502,28 +780,42 @@ form {
     display: grid;
     gap: 0.5rem;
     max-inline-size: 30rem;
+    /* A button is only as wide as its text */
     button {
         justify-self: start;
     }
 }
+```
 
+- `min-width: 0` lets the box shrink to fit its container, rather than pushing out of it on a narrow screen.
+- `font: inherit` makes inputs and buttons use our page font.
+- Each `form` is a [grid][grid] with one column, so each label, input and button sits on its own row, with a gap between them, and no wider than `30rem`.
+- The nested rule stops the button stretching across the row, so it is only as wide as its text.
+
+### One row for the search {#search-row}
+
+A search form is short, so its box and button can share a row.
+Add one more rule at the end of the file.
+
+**public/styles.css**
+```css {linenostart="178"}
 /* The search box and its button share a row, under the label */
 search > form {
     grid-template-columns: 1fr auto;
+    /* The label spans both columns */
     label {
         grid-column: 1 / -1;
     }
 }
 ```
 
-- `font: inherit` makes inputs and buttons use our page font. Browsers give them their own font by default.
-- Each `form` is a [grid][grid] with one column, so each label, input and button sits on its own row.
-- `search > form` is a [child combinator][child combinator]: it selects a form directly inside a `<search>` element. Our search form gets two columns, the box and the button, with the label stretched across both with [`grid-column: 1 / -1`][grid-column].
-- `min-width: 0` lets the box shrink on a narrow screen, rather than pushing the button off the edge.
+- `search > form` is a [child combinator][child combinator]: it selects a form directly inside a `<search>` element, so other forms keep the one-column layout.
+- `1fr auto` gives the grid two columns: `1fr` for the box, which takes the space that is left, and `auto` for the button, which is as wide as its text.
+- The label spans both columns with [`grid-column: 1 / -1`][grid-column], from the first grid line to the last, so it stays above them.
 
 Refresh [http://localhost:8000/books?q=tolkien][q tolkien] to see the finished search.
 
-{{<figure src="images/search-results.webp" alt="The books page after a search for tolkien, with the heading Books matching “tolkien”, a show all books link, the search form with tolkien in the box, and two book cards for The Hobbit and The Fellowship of the Ring" caption="A search for tolkien shows the two matching books, with the query kept in the form.">}}
+{{<figure src="images/search-results.webp" alt="The books page after a search for tolkien, with the heading Books matching “tolkien”, a show all books link, the search form with tolkien in the box, and the matching book cards" caption="A search for tolkien shows the matching books, with the query kept in the form.">}}
 
 ## Something to fix {#quotes}
 
@@ -551,11 +843,12 @@ A quote is harmless, but a user could type any HTML at all.
 We added a search to our application.
 A form builds a *query string*, the controller reads it with `url.searchParams`, and the model filters the books with `LIKE`.
 The search goes to SQLite as a parameter, so it can never change our SQL.
-The page keeps the search in the box and in its title, and says when nothing matches.
+The page keeps the search in the box, in its title and in its page links, and says when nothing matches.
+The form is a partial, shared by the home page and the books page, and our styles lay it out as a grid.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="31"}
+```plaintext {linenos=false, hl_lines="30"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -564,15 +857,17 @@ my-app/
 │   ├── BOOKS-ATTRIBUTION.md
 │   └── books.json
 ├── public/
+│   ├── default-cover.svg
 │   ├── icon.svg
 │   └── styles.css
 ├── server/
 │   ├── controllers/
 │   │   ├── books.js
+│   │   ├── errors.js
 │   │   ├── home.js
-│   │   ├── notFound.js
 │   │   └── static.js
 │   ├── middleware/
+│   │   ├── errors.js
 │   │   └── logging.js
 │   ├── models/
 │   │   ├── books.js
@@ -583,12 +878,11 @@ my-app/
 │   │   └── router.js
 │   ├── views/
 │   │   ├── partials/
-│   │   │   ├── bookCard.js
 │   │   │   └── searchForm.js
 │   │   ├── books.js
+│   │   ├── error.js
 │   │   ├── home.js
-│   │   ├── layout.js
-│   │   └── notFound.js
+│   │   └── layout.js
 │   └── main.js
 ├── tasks/
 │   ├── db-create.js
@@ -607,17 +901,24 @@ These are questions to investigate, not changes to keep.
 - Visit [http://localhost:8000/books?q=tolkien&q=rowling][q two]. Which search does the page show, and what does that tell you about `get`?
 - Search for `%`, and then for `_`. Why do both show every book? Look up what `_` means in a [`LIKE` pattern][sqlite like].
 - Search for three spaces. What does the heading say, and why does nothing match? How could the string method [`trim`][trim] help?
+- Search for **stephen king** and click **next**. What does the address bar say, and where did the `+` come from this time?
 
 > If you tried any changes, undo them, so that your code matches the starting point of the next exercise.
 
-[previous exercise]: router-class/middleware/
-[with logs]: router-class/middleware/#with-logs
-[router url]: router-class/router/#handle
-[url search]: https://developer.mozilla.org/en-US/docs/Web/API/URL/search
+[previous exercise]: user-input-and-security/pagination/
+[query string]: user-input-and-security/pagination/#query-string
+[page number]: user-input-and-security/pagination/#page-number
+[page links]: user-input-and-security/pagination/#page-links
+[falsy]: user-input-and-security/pagination/#missing-year
+[lost search]: user-input-and-security/search/#lost-search
 [q hobbit]: http://localhost:8000/books?q=hobbit
 [q tolkien]: http://localhost:8000/books?q=tolkien
 [q harry potter]: http://localhost:8000/books?q=harry+potter
 [q zebra]: http://localhost:8000/books?q=zebra
+[q the]: http://localhost:8000/books?q=the
+[q of the]: http://localhost:8000/books?q=of+the
+[q of the page 3]: http://localhost:8000/books?q=of+the&page=3
+[q of the page 4]: http://localhost:8000/books?q=of+the&page=4
 [q quoted]: http://localhost:8000/books?q=%22hobbit%22
 [q two]: http://localhost:8000/books?q=tolkien&q=rowling
 [books]: http://localhost:8000/books
@@ -633,15 +934,12 @@ These are questions to investigate, not changes to keep.
 [template literals]: javascript-fundamentals/books-data/#template-literals
 [lower case]: javascript-fundamentals/book-search/#lower-case
 [logical or]: javascript-fundamentals/book-search/#logical-or
-[named parameters]: sqlite-and-models/database/#models
 [sql injection]: https://en.wikipedia.org/wiki/SQL_injection
 [owasp params]: https://cheatsheetseries.owasp.org/cheatsheets/Query_Parameterization_Cheat_Sheet.html
-[searchparams]: https://developer.mozilla.org/en-US/docs/Web/API/URL/searchParams
-[usp get]: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams/get
 [nullish coalescing]: javascript-fundamentals/book-search/#prompt
 [conditional operator]: views-and-controllers/controllers/#title
-[falsy]: https://developer.mozilla.org/en-US/docs/Glossary/Falsy
-[partials]: sqlite-and-models/books-page/#partials
+[url search params]: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams
+[shorthand]: router-class/router/#classes
 [default parameters]: views-and-controllers/controllers/#options
 [grid]: sqlite-and-models/books-page/#grid
 [child combinator]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/Child_combinator
