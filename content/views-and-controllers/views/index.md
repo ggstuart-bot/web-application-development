@@ -163,7 +163,7 @@ Create a folder called **views** inside the **server** folder, with a file calle
 ```JavaScript
 // Placeholder: this will need to change when we add flash messages, sign-in and nav highlighting
 export function layout(content) {
-    const document = `
+    return `
         <!DOCTYPE html>
         <html lang="en">
             <head>
@@ -173,16 +173,19 @@ export function layout(content) {
                 <link rel="icon" href="/assets/icon.svg">
             </head>
             <body>
-            ${content}
+                ${content}
             </body>
         </html>
     `;
-    return document;
 }
 ```
 
 The function takes the `content` as an argument and puts it inside the `<body>` with `${content}`.
 This is the same template literal we have been using all along, with a value dropped into it.
+
+Notice that `layout` returns the template literal directly.
+In **server/main.js** the document had a name because we passed it on to `new Response`, but here there is nothing more to do with it.
+Everything inside `<body>` is indented one level, including `${content}`, so the structure of the page is easy to read.
 
 > The layout will need more than just the content later on, when we add flash messages, sign-in and nav highlighting.
 > This line will change when we add them.
@@ -385,7 +388,7 @@ Update **server/views/layout.js**.
 ```JavaScript{hl_lines="9 14-20 22-27"}
 // Placeholder: this will need to change when we add flash messages, sign-in and nav highlighting
 export function layout(content) {
-    const document = `
+    return `
         <!DOCTYPE html>
         <html lang="en">
             <head>
@@ -396,24 +399,23 @@ export function layout(content) {
                 <link rel="icon" href="/assets/icon.svg">
             </head>
             <body>
-            <header class="secondary">
-                <a href="/" class="brand"><img src="/assets/icon.svg" alt=""> Bookshelves</a>
-                <nav>
-                    <a href="/books">books</a>
-                </nav>
-            </header>
-            <main>
-            ${content}
-            </main>
-            <footer class="secondary">
-                <p>
-                    &copy; Bookshelves developers
-                </p>
-            </footer>
+                <header class="secondary">
+                    <a href="/" class="brand"><img src="/assets/icon.svg" alt=""> Bookshelves</a>
+                    <nav>
+                        <a href="/books">books</a>
+                    </nav>
+                </header>
+                <main>
+                ${content}
+                </main>
+                <footer class="secondary">
+                    <p>
+                        &copy; Bookshelves developers
+                    </p>
+                </footer>
             </body>
         </html>
     `;
-    return document;
 }
 ```
 
@@ -434,20 +436,22 @@ We have added three things around our `${content}`.
 Replace the contents of **public/styles.css** with the following.
 
 **public/styles.css**
-```css {hl_lines="1 4-5 18-29 36-77"}
+```css{hl_lines="1 4-5 20-32 37-81"}
 /* The accent is a custom property, so it is set once and used everywhere */
 :root {
     color-scheme: light dark; /* light or dark page colours, from the OS setting */
     --hue: 20; /* change the hue (0 to 360) to pick any accent colour */
-    --highlight: oklch(62% 0.2 var(--hue));
+    --highlight: oklch(62% 0.2 var(--hue)); /* a strong, mid-lightness colour in that hue */
 }
 
+/* No gap around the page, and the system's own font at a light weight */
 body {
     margin: 0;
     font-family: system-ui;
     font-weight: 300;
 }
 
+/* Headings are a little heavier than the light body text */
 h1 {
     font-weight: 400;
 }
@@ -459,7 +463,7 @@ a {
     text-decoration-thickness: 2px;
 }
 
-/* The header and footer are dark panels with light text */
+/* A secondary panel is dark, with light text */
 .secondary {
     background: #333;
     color: white;
@@ -474,8 +478,9 @@ body > * {
 body {
     display: grid;
     grid-template-rows: auto 1fr auto;
-    min-block-size: 100vh;
+    min-block-size: 100vh; /* at least as tall as the window, so the footer stays at the bottom */
 
+    /* The header and footer spread their items along a row that wraps */
     & > header,
     & > footer {
         display: flex;
@@ -492,6 +497,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     font-size: 1.5em;
+    /* The logo is as tall as the text */
     img {
         block-size: 1em;
     }
@@ -517,6 +523,7 @@ nav {
 Most of this is revision.
 The `body` grid and the flex `header` and `footer` work just like the layout we built in the [Hello world][hello world upgrade] exercise.
 The `secondary` and `brand` class names in our layout are what these rules select.
+As before, every ruleset has a short comment saying what it does.
 
 A couple of things are new.
 
