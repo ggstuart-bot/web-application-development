@@ -1,17 +1,16 @@
 ---
 type: exercise
 title: A books page
-weight: 9
+weight: 8
 author: Dr Graeme Stuart
 ---
 
-In this exercise we will add a books page which shows every book in our database as a card, with its cover.
-Along the way we will pass data from a model, through a controller, to a view.
+In this exercise we will add a books page which shows the first page of our books as cards, with their covers.
+Along the way we will write our first *model*, and pass data from the model, through a controller, to a view.
 
 <!--more-->
 
-> You should have a books database with 20 books from the [previous exercise][previous exercise].
-> If you have been experimenting, run `deno task db:reset` to get back to 20.
+> You should have a home page and a not-found page, each with its own controller, from the [previous exercise][previous exercise].
 > Before you start, make sure everything is committed to your git repository.
 
 ## Learning objectives
@@ -20,10 +19,11 @@ The books page is a new *feature*.
 We will build it one small step at a time, checking the browser after each one.
 By the end of this exercise you should be able to:
 
+- Add data to a project, and explain why we credit its source
 - Add a page with a view and a controller, and explain the technical debt it adds
+- Write a *model* which looks after our data, and explain where models fit in model-view-controller
 - Pass data from a model to a view through `render`
 - Turn an array of books into HTML with `map` and `join`
-- Explain what a *partial* is and why we use one
 - Lay out a page of cards with CSS grid, including a grid inside each card
 
 ## Setup
@@ -40,12 +40,61 @@ Click the **books** link in the header.
 ```http
 HTTP/1.1 404 Not Found
 content-type: text/html
-content-length: 1083
+content-length: 1139
 date: Thu, 29 Oct 2026 14:33:35 GMT
 ```
 
 The link has been there since we added the header, but it goes to our not-found page.
 Let's fix that.
+
+## The data {#data}
+
+*Bookshelves* needs books.
+We will use the same list of the 1,000 most-rated books on Goodreads that we met in [Working with the books data][books data], from a public dataset called [goodbooks-10k][goodbooks].
+
+Create a folder called **db** in the root of the project.
+Save {{<a href="files/books.json" download="books.json" >}}this list of books{{< /a >}} as **books.json** and {{<a href="files/BOOKS-ATTRIBUTION.txt" download="BOOKS-ATTRIBUTION.md" >}}this attribution file{{< /a >}} as **BOOKS-ATTRIBUTION.md**, both in the **db** folder.
+
+**books.json** is a JSON array with one book on each line.
+Here's the start of it.
+
+**db/books.json**
+```json{linenostart=1}
+[
+    { "title": "The Hunger Games", "author": "Suzanne Collins", "year": 2008, "thumbnailUrl": "https://images.gr-assets.com/books/1447303603m/2767052.jpg", "coverUrl": "https://images.gr-assets.com/books/1447303603l/2767052.jpg" },
+```
+
+Each book has a `title`, an `author` and a `year`, plus links to a small and a large cover image.
+Some books have no cover images, so their `thumbnailUrl` and `coverUrl` are `null`.
+
+### Crediting the data {#attribution}
+
+We didn't create this data, so we must say where it came from.
+
+**db/BOOKS-ATTRIBUTION.md**
+```markdown
+# Book data
+
+- `books.json` is derived from goodbooks-10k by Zygmunt Zając
+  (https://github.com/zygmuntz/goodbooks-10k), licensed CC BY-SA 4.0
+  (https://creativecommons.org/licenses/by-sa/4.0/). Changes: the 1,000 most-rated books; titles,
+  authors and years cleaned; multiple authors joined into one field. This derived data is shared
+  under CC BY-SA 4.0.
+- Cover images (thumbnailUrl, coverUrl) belong to their publishers; they are linked, not copied.
+```
+
+The original dataset is shared under the [CC BY-SA 4.0][cc by-sa] licence.
+*BY* means anyone who uses it must credit the author.
+*SA* (share alike) means anything we make from it must be shared under the same licence.
+We changed the data, so the attribution says what we changed, and our version is shared under the same licence.
+
+> Crediting your sources is good practice anyway.
+> With data like this, it's also a condition of using it at all.
+
+> The cover images belong to their publishers.
+> We only link to them, we don't copy them into our project.
+
+Nothing uses the data yet, so our website is unchanged.
 
 ## A books view and controller {#books-controller}
 
@@ -126,7 +175,7 @@ Refresh [http://localhost:8000/books][books].
 ```http
 HTTP/1.1 200 OK
 content-type: text/html
-content-length: 1067
+content-length: 1123
 date: Thu, 29 Oct 2026 14:33:37 GMT
 ```
 
@@ -140,10 +189,42 @@ Every page we add needs another one, and they all look the same.
 This is [technical debt][technical debt], and it grows with every page.
 The router placeholder is a reminder that we will pay it off when we add a router.
 
-## Passing data to the view {#passing-data}
+## A books model {#models}
 
 Our page has no books yet.
-The books are in our [model][mvc], and the view needs them.
+The books are in **db/books.json**, and the view needs them.
+
+We could import the file into our controller, or even into our view.
+Instead, we will give our data a module of its own.
+Create a folder called **models** inside the **server** folder, with a file called **books.js**.
+
+**server/models/books.js**
+```JavaScript
+import books from "../../db/books.json" with { type: "json" };
+
+// Placeholder: this will need to change when we add search
+export function getBooks() {
+    return books;
+}
+```
+
+We import the JSON file just as we did when we [imported the books][import books] in the terminal, so `books` is an array of objects.
+`getBooks` returns them.
+
+> Another placeholder.
+> When we add search, `getBooks` will need to find only the matching books.
+
+### The M in MVC {#mvc}
+
+**server/models/books.js** is a *model*.
+Models are the M in [model-view-controller][mvc views].
+We already have [views][mvc views] which present information and [controllers][mvc controllers] which handle requests.
+A model looks after our data, and the rest of our code asks the model rather than reading the data itself.
+
+Just like views and controllers, a model is a set of related functions grouped into a module.
+
+## Passing data to the view {#passing-data}
+
 `render` calls the view, so `render` must pass the books on.
 
 Update **server/tools/render.js** so that `render` takes a `data` option and gives it to the view.
@@ -213,7 +294,7 @@ So inside the view, `books` is our array of books.
 
 [`map`][array map] calls a function on every item in an array and gives us a new array of the results.
 We pass `bookItem` itself to `map`, without brackets, just as we [passed views to render][first-class function].
-So `books.map(bookItem)` is an array of 20 strings, one for each book.
+So `books.map(bookItem)` is an array of strings, one for each book.
 
 > `bookItem` isn't exported.
 > It is only used by the books view, so it stays in this module.
@@ -224,7 +305,7 @@ We give it `""` so that nothing goes between them.
 > Without `join`, the template literal would turn the array into a string itself, with a comma between each item.
 
 Refresh [http://localhost:8000/books][books].
-You should see a bulleted list of our 20 titles.
+You should see a very long bulleted list of titles, all 1,000 of them.
 View the page source (**Ctrl + U**) and look at the list.
 Here's the start of it.
 
@@ -245,54 +326,50 @@ All three parts of [model-view-controller][mvc] now work together.
 The controller asks the model for the books, and gives them to the view.
 The view doesn't know where the books came from, and the model doesn't know anything about HTML.
 
-{{<figure src="images/books-list.webp" alt="A Bookshelves page headed Books, with a bulleted list of 20 book titles" caption="The books page shows our 20 titles as a bulleted list.">}}
+{{<figure src="images/books-list.webp" alt="A Bookshelves page headed Books, with a long bulleted list of book titles" caption="The books page shows every title as one long bulleted list.">}}
 
-### Removing the books task {#remove-books-task}
+## The first page of books {#page-size}
 
-When we [listed the books in the terminal][get books] we promised that the `books` task was temporary.
-The books page does its job now.
+A thousand books is far too many for one page.
+For now, we will show only the first few.
 
-Delete **tasks/books.js** and remove the `books` task from **deno.json**.
+Update **server/controllers/books.js** to ask for a fixed number of books.
 
-**deno.json**
-```json{hl_lines="7"}
-{
-    "tasks": {
-        "serve": "deno -A tasks/server.js",
-        "dev": "deno --watch -A tasks/server.js",
-        "db:create": "deno -A tasks/db-create.js",
-        "db:seed": "deno -A tasks/db-seed.js",
-        "db:reset": "deno task db:create && deno task db:seed"
-    },
-    "imports": {
-        "@db/sqlite": "jsr:@db/sqlite@^0.12.0",
-        "@std/http": "jsr:@std/http@^1.1.4"
-    }
+**server/controllers/books.js**
+```JavaScript{hl_lines="5 8"}
+import { getBooks } from "../models/books.js";
+import { render } from "../tools/render.js";
+import { booksView } from "../views/books.js";
+
+const PAGE_SIZE = 16;
+
+export function booksController() {
+    const books = getBooks(PAGE_SIZE);
+    return render(booksView, { title: "Books", data: { books } });
 }
 ```
 
-> Don't forget to remove the comma at the end of the `db:reset` line, now that it's the last task.
+`PAGE_SIZE` is the number of books on a page, set in one place at the top of the module.
+Writing a constant like this in capitals is a common convention for a fixed value.
 
-```bash {linenos=false}
-deno task books
+Then update **server/models/books.js** so that `getBooks` takes a `limit`.
+
+**server/models/books.js**
+```JavaScript{hl_lines="4-5"}
+import books from "../../db/books.json" with { type: "json" };
+
+// Placeholder: this will need to change when we add search
+export function getBooks(limit) {
+    return books.slice(0, limit);
+}
 ```
 
-```plaintext {linenos=false}
-Task not found: books
-Available tasks:
-- serve
-    deno -A tasks/server.js
-- dev
-    deno --watch -A tasks/server.js
-- db:create
-    deno -A tasks/db-create.js
-- db:seed
-    deno -A tasks/db-seed.js
-- db:reset
-    deno task db:create && deno task db:seed
-```
+[`slice`][slice] gives us a new array with only the first `limit` books, just as it did in the terminal.
 
-The task has gone.
+The model decides *how* to find the books, and the controller decides *how many* it wants.
+
+Refresh [http://localhost:8000/books][books].
+The page now lists the first 16 titles.
 
 ## A grid of books {#grid}
 
@@ -326,7 +403,7 @@ function bookItem(book) {
 Then add a `.grid` rule to the end of **public/styles.css**.
 
 **public/styles.css**
-```css {linenostart="79"}
+```css{linenostart=83}
 /* auto-fill makes as many columns as fit, each at least 15rem wide */
 .grid {
     display: grid;
@@ -352,56 +429,16 @@ The number of columns changes to fit.
 > `class="grid"` describes the layout, not the books.
 > Any list we want to show as a grid can use it.
 
-{{<figure src="images/books-grid.webp" alt="The books page with the 20 titles laid out in four columns" caption="The books page now shows the titles in a grid.">}}
+{{<figure src="images/books-grid.webp" alt="The books page with the 16 titles laid out in four columns" caption="The books page now shows the titles in a grid.">}}
 
-## A card for each book {#partials}
+## A card for each book {#book-card}
 
 Each book will be a *card*, a box with the book's details in it.
-`bookItem` is about to grow, and we may want to show a book card on other pages one day.
 
-Create a folder called **partials** inside the **server/views** folder, with a file called **bookCard.js**.
-
-**server/views/partials/bookCard.js**
-```JavaScript
-export function bookCard(book) {
-    return `
-        <li class="card">
-            <div>
-                <h2>${book.title}</h2>
-                <p>${book.author} (${book.year})</p>
-            </div>
-        </li>
-    `;
-}
-```
-
-It has the same shape as `bookItem`, with a `class` on the `<li>` and the author and year added.
-
-`bookCard` is a *partial*.
-A partial is a small view used inside other views.
-Like every view, it is a function that returns HTML.
-Our partials live in their own folder, so we can tell them apart from whole pages.
-
-```plaintext {linenos=false, hl_lines="4-5"}
-my-app/
-├── server/
-│   ├── views/
-│   │   ├── partials/
-│   │   │   └── bookCard.js
-│   │   ├── books.js
-│   │   ├── home.js
-│   │   ├── layout.js
-│   │   └── notFound.js
-│   └── …
-└── …
-```
-
-Update **server/views/books.js** to import `bookCard` and use it instead of `bookItem`.
+Update **server/views/books.js**, replacing `bookItem` with a `bookCard` function.
 
 **server/views/books.js**
-```JavaScript{hl_lines="1-2 10"}
-import { bookCard } from "./partials/bookCard.js";
-
+```JavaScript{hl_lines="8 14 16-21"}
 export function booksView({ data: { books } }) {
     return `
         <section>
@@ -414,15 +451,31 @@ export function booksView({ data: { books } }) {
         </section>
     `;
 }
+
+function bookCard(book) {
+    return `
+        <li class="card">
+            <div>
+                <h2>${book.title}</h2>
+                <p>${book.author} (${book.year})</p>
+            </div>
+        </li>
+    `;
+}
 ```
 
-> `bookItem` has gone.
-> `bookCard` does its job, with the author and year too.
+It has the same shape as `bookItem`, with a `class` on the `<li>` and the author and year added.
+`booksView` now maps the books with `bookCard`.
+
+> Like `bookItem`, `bookCard` is a local function, not exported.
+> The books page is the only place that uses it.
 
 Each card has a heading, so let's give `<h2>` elements the same weight as `<h1>` near the top of **public/styles.css**.
+They share the comment about headings.
 
 **public/styles.css**
-```css {linenostart="14" hl_lines="1-2"}
+```css{linenostart=15 hl_lines="2-3"}
+/* Headings are a little heavier than the light body text */
 h1,
 h2 {
     font-weight: 400;
@@ -432,7 +485,7 @@ h2 {
 Then add a `.card` rule to the end of the file.
 
 **public/styles.css**
-```css {linenostart="89"}
+```css{linenostart=93}
 /* A card is a bordered box with rounded corners */
 .card {
     border: 1px solid;
@@ -442,6 +495,7 @@ Then add a `.card` rule to the end of the file.
         padding: 0.5rem;
     }
 
+    /* Headings and paragraphs in a card have no margins and stay at the text size */
     h2,
     p {
         margin: 0;
@@ -452,7 +506,7 @@ Then add a `.card` rule to the end of the file.
 
 [`> div:last-child`][last-child] is nested inside `.card`, like the `& > header` in our `body` rule.
 It means the last `<div>` directly inside a card, which holds the text.
-The headings and paragraphs inside a card lose their margins and are all the same size.
+The headings and paragraphs inside a card lose their margins and are all the same size, as the comment says.
 
 Refresh [http://localhost:8000/books][books].
 Each book is now a bordered box with its title, author and year.
@@ -462,11 +516,24 @@ Each book is now a bordered box with its title, author and year.
 ## Covers {#cover}
 
 Books are easier to find by their covers.
-Add an [`<img>`][img] to the card in **server/views/partials/bookCard.js**.
+Add an [`<img>`][img] to the card in **server/views/books.js**.
 
-**server/views/partials/bookCard.js**
-```JavaScript{hl_lines="4"}
-export function bookCard(book) {
+**server/views/books.js**
+```JavaScript{hl_lines="17"}
+export function booksView({ data: { books } }) {
+    return `
+        <section>
+            <header>
+                <h1>Books</h1>
+            </header>
+            <ul class="grid">
+                ${books.map(bookCard).join("")}
+            </ul>
+        </section>
+    `;
+}
+
+function bookCard(book) {
     return `
         <li class="card">
             <img class="cover" src="${book.coverUrl}" alt="" width="200" height="300" loading="lazy">
@@ -485,12 +552,12 @@ export function bookCard(book) {
 - [`loading="lazy"`][lazy loading] waits to load a cover until it is near the visible part of the page. We will [watch it at work][lazy demo] once our cards are finished.
 
 > Some books in **books.json** have no cover, so their `coverUrl` is `null`.
-> None of our 20 books are like that, so we can leave them for now.
+> None of our first 16 books are like that, so we can leave them for now.
 
 Add an `img` rule to **public/styles.css**, after the `nav` rule.
 
 **public/styles.css**
-```css {linenostart="80"}
+```css{linenostart=84}
 /* Pictures never overflow their box */
 img {
     max-inline-size: 100%;
@@ -503,17 +570,18 @@ This rule stops any image from overflowing its box.
 Then add `overflow: clip` to `.card`, and a `.cover` rule after it.
 
 **public/styles.css**
-```css {linenostart="94" hl_lines="5 18-24"}
+```css{linenostart=98 hl_lines="5 18-25"}
 /* A card is a bordered box with rounded corners */
 .card {
     border: 1px solid;
     border-radius: 0.5rem;
-    overflow: clip;
+    overflow: clip; /* the cover is cut to the rounded corners */
 
     > div:last-child {
         padding: 0.5rem;
     }
 
+    /* Headings and paragraphs in a card have no margins and stay at the text size */
     h2,
     p {
         margin: 0;
@@ -548,13 +616,13 @@ Start with the grid itself.
 Update the `.card` rule in **public/styles.css**.
 
 **public/styles.css**
-```css {linenostart="94" hl_lines="1 3 7 9 11-13"}
+```css{linenostart=98 hl_lines="1 3 7 9 11-13"}
 /* A card is a bordered box with rounded corners. Each kind of card sets its own grid */
 .card {
     display: grid;
     border: 1px solid;
     border-radius: 0.5rem;
-    overflow: clip;
+    overflow: clip; /* the cover is cut to the rounded corners */
     overflow-wrap: anywhere; /* a very long word breaks, rather than squashing the cover */
 
     /* The text is spread from the top of the card to the bottom */
@@ -565,6 +633,7 @@ Update the `.card` rule in **public/styles.css**.
         padding: 0.5rem;
     }
 
+    /* Headings and paragraphs in a card have no margins and stay at the text size */
     h2,
     p {
         margin: 0;
@@ -585,8 +654,7 @@ Different kinds of card will want different columns, so each kind sets its own.
 Add a `.card.book` rule to the end of **public/styles.css**.
 
 **public/styles.css**
-```css {linenostart="124"}
-
+```css{linenostart=130}
 /* A book card: the cover in a narrow column, the text beside it */
 .card.book {
     grid-template-columns: 2fr 3fr;
@@ -596,11 +664,24 @@ Add a `.card.book` rule to the end of **public/styles.css**.
 `.card.book` matches elements with both classes.
 The two columns are measured in [`fr`][fr], a share of the space, so the cover gets two parts and the text gets three.
 
-Add the `book` class to the card in **server/views/partials/bookCard.js**.
+Add the `book` class to the card in **server/views/books.js**.
 
-**server/views/partials/bookCard.js**
-```JavaScript{hl_lines="3"}
-export function bookCard(book) {
+**server/views/books.js**
+```JavaScript{hl_lines="16"}
+export function booksView({ data: { books } }) {
+    return `
+        <section>
+            <header>
+                <h1>Books</h1>
+            </header>
+            <ul class="grid">
+                ${books.map(bookCard).join("")}
+            </ul>
+        </section>
+    `;
+}
+
+function bookCard(book) {
     return `
         <li class="card book">
             <img class="cover" src="${book.coverUrl}" alt="" width="200" height="300" loading="lazy">
@@ -636,27 +717,26 @@ Now scroll down slowly and watch the **network** panel.
 Each cover is requested just before it comes into view.
 
 > The browser starts loading a lazy image while it is still some distance below the window, so it's usually ready by the time you get there.
-> With two or more columns, our 20 books fit near enough to the top that the browser loads nearly all the covers straight away.
+> With two or more columns, our 16 books fit near enough to the top that the browser loads nearly all the covers straight away.
 
 ## Conclusion
 
-We added a books page, our first page to show data from the database.
+We added a books page, our first page to show data.
 We followed the same pattern as before, a view, a controller and one more `if` in **server/main.js**.
+We wrote our first model, the M in model-view-controller, which reads the books from **db/books.json**.
 `render` gained a `data` option, so the controller can pass the books from the model to the view.
-We turned the books into HTML with `map` and `join`, moved each book's HTML into a partial, and laid the cards out with a grid inside a grid.
-The temporary `books` task has gone.
+We turned the first 16 books into HTML with `map` and `join`, and laid out each book as a card, with a grid inside a grid.
 
 We also added some debt.
 Our `if` chain is longer.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="13 23-25"}
+```plaintext {linenos=false, hl_lines="4-6 12 16-17 21"}
 my-app/
 ├── .vscode/
 │   └── settings.json
 ├── db/
-│   ├── app.db
 │   ├── BOOKS-ATTRIBUTION.md
 │   └── books.json
 ├── public/
@@ -669,23 +749,17 @@ my-app/
 │   │   ├── notFound.js
 │   │   └── static.js
 │   ├── models/
-│   │   ├── books.js
-│   │   └── db.js
+│   │   └── books.js
 │   ├── tools/
 │   │   └── render.js
 │   ├── views/
-│   │   ├── partials/
-│   │   │   └── bookCard.js
 │   │   ├── books.js
 │   │   ├── home.js
 │   │   ├── layout.js
 │   │   └── notFound.js
 │   └── main.js
 ├── tasks/
-│   ├── db-create.js
-│   ├── db-seed.js
 │   └── server.js
-├── .gitignore
 ├── deno.json
 └── deno.lock
 ```
@@ -695,28 +769,34 @@ my-app/
 - In the `.card.book` rule, try `1fr 1fr` or `1fr 3fr` instead of `2fr 3fr`. Which looks best at different window widths?
 - In the `.grid` rule, change *15rem* to *10rem* or *25rem* and watch the number of columns.
 - In the **Elements** panel, select a card and untick `display: grid` on `.card`, and then `object-fit: cover` on `.cover`. What does each one do?
-- Change `20` to `100` in **tasks/db-seed.js**, run `deno task db:reset` and refresh [http://localhost:8000/books][books]. How long does the page take to scroll through? Do any cards look wrong?
+- Change `PAGE_SIZE` to `100` and refresh [http://localhost:8000/books][books]. How long does the page take to scroll through? Do any cards look wrong?
 
-> Put **public/styles.css** and **tasks/db-seed.js** back to the versions above, then run `deno task db:reset` before moving on.
+> Put **public/styles.css** and `PAGE_SIZE` back to the versions above before moving on.
 
 Finally, something to think about.
-Our books page shows every book in the database.
-What would happen with all 1,000?
+Our model reads every book from **db/books.json**, and then throws most of them away.
+Where else could our books live, and what would we need to change if we moved them?
 
-[previous exercise]: sqlite-and-models/database/
+[previous exercise]: views-and-controllers/controllers/
 [localhost]: http://localhost:8000/
+[books data]: javascript-fundamentals/books-data/
+[goodbooks]: https://github.com/zygmuntz/goodbooks-10k
+[cc by-sa]: https://creativecommons.org/licenses/by-sa/4.0/
 [controllers]: views-and-controllers/controllers/#controllers
 [books]: http://localhost:8000/books
 [ctx]: views-and-controllers/controllers/#ctx
 [nope]: http://localhost:8000/nope
 [technical debt]: views-and-controllers/controllers/#technical-debt
-[mvc]: sqlite-and-models/database/#mvc
+[import books]: javascript-fundamentals/books-data/#import
+[mvc views]: views-and-controllers/views/#mvc
+[mvc controllers]: views-and-controllers/controllers/#mvc
+[mvc]: sqlite-and-models/books-page/#mvc
 [options]: views-and-controllers/controllers/#options
 [destructuring]: views-and-controllers/controllers/#title
 [array map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
 [array join]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join
-[get books]: sqlite-and-models/database/#get-books
 [first-class function]: views-and-controllers/controllers/#view-functions
+[slice]: javascript-fundamentals/books-data/#slice
 [styles]: views-and-controllers/views/#styles
 [grid-template-columns]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/grid-template-columns
 [repeat]: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/repeat
