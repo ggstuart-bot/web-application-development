@@ -6,3 +6,4 @@ weight: 106
 
 In this unit we will pay off some technical debt by refactoring our routing into a router class.
 We will also consolidate the context pattern, so every controller works with the same request context.
+Then we will write our first middleware, to log every request and handle errors in one place.

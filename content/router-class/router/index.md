@@ -10,7 +10,7 @@ Along the way we will write our first class.
 
 <!--more-->
 
-> You should have a books page showing 20 books from the [previous exercise][previous exercise].
+> You should have a books page showing the first 16 books, in order of title, from the [previous exercise][previous exercise].
 > Before you start, make sure everything is committed to your git repository.
 
 ## Learning objectives
@@ -61,7 +61,7 @@ export function server(request) {
 ```
 
 > The two placeholders mark the debt we will pay off in this unit.
-> The router placeholder goes in this exercise, and the middleware placeholder in the next.
+> The router placeholder goes in this exercise, and the middleware placeholder later in this unit.
 
 Look at what it does.
 
@@ -71,6 +71,7 @@ Look at what it does.
 This unit is about paying off [technical debt][technical debt].
 In this exercise we will pay off the `if` chain.
 In the next one we will tidy up how our controllers, views and layout share information.
+After that, we will replace our logging with *middleware*.
 
 Start the server in development mode.
 
@@ -125,6 +126,10 @@ Each route is a small object with two properties: a pattern for the path, and th
 It describes the paths a route should match.
 `{ pathname }` is shorthand for `{ pathname: pathname }`.
 The `*` in a pattern such as `/assets/*` matches anything, so one route can cover every file in **public**.
+
+Nothing uses our class yet, so the website is unchanged.
+
+## Registering our routes {#register}
 
 Now update **server/main.js** to make a router and register our routes.
 
@@ -217,6 +222,10 @@ If no route matches, `find` gives us `undefined`.
 Our `return;` then returns `undefined` too, which tells the caller we couldn't help.
 Otherwise we call the route's handler with `ctx`, and return the `Response` it gives us.
 
+Nothing calls `handle` yet, so the website is unchanged.
+
+## Letting the router choose {#choose}
+
 Now update **server/main.js** to let the router decide which controller to call.
 
 **server/main.js**
@@ -251,7 +260,7 @@ This is the context pattern doing its job: `ctx` grows, and nothing else has to 
 If the router returns `undefined`, the [`??`][nullish coalescing] falls back to our not-found controller.
 
 > The middleware placeholder is still there.
-> We will replace it in the next exercise.
+> We will replace it later in this unit.
 
 Check our pages.
 
@@ -272,7 +281,7 @@ That works, but it is easy to forget the `??` in **server/main.js**, and `undefi
 
 A request for a page that doesn't exist is an *exceptional* situation, and JavaScript has a way to report those: errors.
 
-### Throwing an error {#throw}
+### A NotFoundError class {#not-found-class}
 
 Create **errors.js** in the **server/tools** folder.
 
@@ -284,6 +293,10 @@ export class NotFoundError extends Error {}
 `NotFoundError` is a new kind of [`Error`][error].
 [`extends`][extends] means it is an `Error` in every way, with nothing added.
 Its name tells us what went wrong.
+
+Nothing uses it yet, so the website is unchanged.
+
+### Throwing an error {#throw}
 
 Update **server/tools/router.js** to throw a `NotFoundError` when no route matches.
 
@@ -319,7 +332,7 @@ export class Router {
 Our message, built with a template literal, says which path failed.
 
 Nothing catches it yet.
-Refresh [http://localhost:8000/nope][nope].
+Before we update **server/main.js**, refresh [http://localhost:8000/nope][nope].
 
 ```http
 HTTP/1.1 500 Internal Server Error
@@ -338,7 +351,7 @@ NotFoundError: /nope doesn't match any known route
 We have seen a `500` caused by our own code before, when our [handler returned `undefined`][implicit undefined].
 This one is more helpful, because the message says exactly what happened.
 
-### Catching the error {#catch}
+#### Catching the error {#catch}
 
 Update **server/main.js** to catch the error.
 
@@ -411,7 +424,7 @@ But adding a page is now one line in **server/main.js**.
 
 Our project now looks like this.
 
-```plaintext {linenos=false, hl_lines="21 23"}
+```plaintext {linenos=false, hl_lines="22 24"}
 my-app/
 ├── .vscode/
 │   └── settings.json
@@ -420,6 +433,7 @@ my-app/
 │   ├── BOOKS-ATTRIBUTION.md
 │   └── books.json
 ├── public/
+│   ├── default-cover.svg
 │   ├── icon.svg
 │   └── styles.css
 ├── server/
@@ -436,8 +450,6 @@ my-app/
 │   │   ├── render.js
 │   │   └── router.js
 │   ├── views/
-│   │   ├── partials/
-│   │   │   └── bookCard.js
 │   │   ├── books.js
 │   │   ├── home.js
 │   │   ├── layout.js
@@ -452,7 +464,8 @@ my-app/
 └── deno.lock
 ```
 
-In the next exercise we will give every controller, view and the layout the same context object, and replace our logging placeholder with our first *middleware*.
+In the next exercise we will give every controller, view and the layout the same context object, and use it to mark the current page in the nav.
+After that, we will replace our logging placeholder with our first *middleware*.
 
 ## Challenge: Try out the router
 
@@ -462,7 +475,7 @@ In the next exercise we will give every controller, view and the layout the same
 
 > Undo your changes, so that your code matches the starting point of the next exercise.
 
-[previous exercise]: sqlite-and-models/books-page/
+[previous exercise]: sqlite-and-models/database/
 [if chain]: sqlite-and-models/books-page/#if-chain
 [technical debt]: views-and-controllers/controllers/#technical-debt
 [books]: http://localhost:8000/books
