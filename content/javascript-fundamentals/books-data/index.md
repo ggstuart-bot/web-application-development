@@ -53,7 +53,7 @@ Open **data/BOOKS-ATTRIBUTION.md**.
 ```
 
 Keep that file next to the data.
-We will meet the same files again when we build the database.
+We will meet the same files again when we build the [books page][books page].
 
 ```plaintext {linenos=false, hl_lines="2-4"}
 my-app/
@@ -457,6 +457,7 @@ my-app/
 > Put **main.js** back to the version above before moving on.
 
 [previous exercise]: javascript-fundamentals/deno-setup/
+[books page]: sqlite-and-models/books-page/
 [import attributes]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import/with
 [property accessors]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors
 [concatenation]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Addition#string_concatenation
