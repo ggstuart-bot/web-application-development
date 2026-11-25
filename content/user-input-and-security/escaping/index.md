@@ -812,7 +812,7 @@ Go back through every stage, from [`<strong>Hobbit</strong>`][bold] to the [`val
 The page source for the first search shows why.
 
 ```html
-                <title>Books matching &quot;&lt;strong&gt;Hobbit&lt;/strong&gt;&quot; | Bookshelves</title>
+<title>Books matching &quot;&lt;strong&gt;Hobbit&lt;/strong&gt;&quot; | Bookshelves</title>
 ```
 
 Every character that could have started some HTML has been escaped.
