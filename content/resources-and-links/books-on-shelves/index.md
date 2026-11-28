@@ -416,7 +416,7 @@ export function shelfView(ctx) {
 
 Visit [http://localhost:8000/shelves/1][shelf 1].
 
-{{<figure src="images/shelf-books.webp" alt="The classics shelf page, with four book cards: To Kill a Mockingbird, The Great Gatsby, Pride and Prejudice and Jane Eyre, and a Back to all shelves link below" caption="A shelf's page shows its books.">}}
+{{<figure src="images/shelf-books.webp" alt="The classics shelf page, scrolled so the site nav is out of sight, with four book cards: To Kill a Mockingbird, The Great Gatsby, Pride and Prejudice and Jane Eyre, and a Back to all shelves link below" caption="A shelf's page shows its books.">}}
 
 The books are not in the order we listed them in **db/seed.json**.
 Our query has no `ORDER BY`, so the database returns the rows in whatever order is quickest for it.

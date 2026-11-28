@@ -580,7 +580,7 @@ export function bookView(ctx) {
 Visit [http://localhost:8000/books/1][book 1].
 The cover is there, but it fills the whole width of the page, and the details are pushed far below it.
 
-{{<figure src="images/book-cover-unstyled.webp" alt="The page for The Hunger Games, where the cover image is stretched across the full width of the page and the details are out of sight below it" caption="Without a style, the cover fills the page.">}}
+{{<figure src="images/book-cover-unstyled.webp" alt="The page for The Hunger Games, with only the books link in the nav. The cover is stretched across the full width of the page, and the details are out of sight below it" caption="Without a style, the cover fills the page.">}}
 
 ## A row {#row}
 

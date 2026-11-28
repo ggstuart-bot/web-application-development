@@ -759,7 +759,7 @@ Then add it to the headings inside the `.card` rule.
 Refresh [http://localhost:8000/shelves][shelves].
 A shelf card's title now sits just like a book card's.
 
-{{<figure src="images/shelves-list.webp" alt="The Shelves page, with an All shelves heading and three plain cards titled classics, fantasy and to read, each a link" caption="The shelves page lists every shelf.">}}
+{{<figure src="images/shelves-list.webp" alt="The Shelves page, with the shelves link filled in the nav, an All shelves heading, and three plain cards titled classics, fantasy and to read, each a link" caption="The shelves page lists every shelf.">}}
 
 ## Conclusion
 
