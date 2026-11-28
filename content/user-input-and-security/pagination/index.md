@@ -311,6 +311,9 @@ Now that we can reach every page, the gaps in our data show.
 Our books without a cover already [get the default cover][default cover], but one book has no year.
 Click [http://localhost:8000/books?page=59][page 59] and find **Twilight: The Complete Illustrated Movie Companion**.
 Its card says **Mark Cotta Vaz (null)**.
+
+{{<figure src="images/missing-year.webp" alt="A book card for Twilight: The Complete Illustrated Movie Companion, with the author line Mark Cotta Vaz (null)" caption="This book has no year, so the card says null.">}}
+
 This is the book with no year that we met in the [book search][missing year].
 
 We can't make up a year, so a book without one should simply leave it out.
@@ -377,9 +380,10 @@ The card now says just **Mark Cotta Vaz**.
 ## A page that doesn't exist {#invalid-page}
 
 Click [http://localhost:8000/books?page=100][page 100].
-There are no books, a **previous** link, and **page 100 of 63**.
+The heading still says **Books**, but there are no cards.
+A **previous** link and **page 100 of 63** sit in the middle of the page.
 
-{{<figure src="images/page-past-end.webp" alt="The books page for page 100, with no books, a previous link and page 100 of 63" caption="Page 100 of 63 shouldn’t exist.">}}
+{{<figure src="images/page-past-end.webp" alt="The books page for page 100, with the heading Books, no book cards, a previous link and a filled button that says page 100 of 63, sitting mid-page" caption="Page 100 of 63 shouldn’t exist.">}}
 
 And [http://localhost:8000/books?page=two][page two] quietly gives us page 1.
 

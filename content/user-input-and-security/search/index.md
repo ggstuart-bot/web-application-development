@@ -814,8 +814,9 @@ search > form {
 - The label spans both columns with [`grid-column: 1 / -1`][grid-column], from the first grid line to the last, so it stays above them.
 
 Refresh [http://localhost:8000/books?q=tolkien][q tolkien] to see the finished search.
+In the picture the books are in three columns, with **The Fellowship of the Ring** first, and only the first row fully visible.
 
-{{<figure src="images/search-results.webp" alt="The books page after a search for tolkien, with the heading Books matching “tolkien”, a show all books link, the search form with tolkien in the box, and the matching book cards" caption="A search for tolkien shows the matching books, with the query kept in the form.">}}
+{{<figure src="images/search-results.webp" alt="The books page after a search for tolkien, with the heading Books matching “tolkien”, a show all books link, a styled form that still contains the word tolkien, and a three-column grid of matching book cards, only the first row fully visible, starting with The Fellowship of the Ring" caption="A search for tolkien shows the matching books, with the query kept in the form.">}}
 
 ## Something to fix {#quotes}
 
