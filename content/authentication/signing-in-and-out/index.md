@@ -208,13 +208,14 @@ export function signinView(ctx) {
 }
 ```
 
-The message sits in a `span` that both inputs point to with `aria-describedby`, so a screen reader is told about it from either field.
-The username is kept, and the password is not.
+The message sits at the top of the form, as a red bar, with no full stop.
+Both inputs point to it with `aria-describedby`, so a screen reader is told about it from either field.
+The username is kept, and the password box is empty.
 
 Open [sign in][signin] as **testUser1** with the wrong password, or with a username that doesn't exist.
 You get the same message either way.
 
-{{<figure src="images/invalid-credentials.webp" alt="The sign in page with testUser1 in the username field and Invalid credentials above the form" caption="A missing user and a wrong password get the same message.">}}
+{{<figure src="images/invalid-credentials.webp" alt="The sign in page with testUser1 in the username field, Invalid credentials as a red bar at the top of the form, and an empty password box" caption="A missing user and a wrong password get the same message.">}}
 
 ```plaintext {linenos=false}
 
@@ -531,9 +532,10 @@ export async function withLogs(ctx, next) {
 > The placeholder is there because this log will need to change when we add sessions.
 
 Sign in as **testUser1** again.
-The home page's footer says **Signed in as 'testUser1'**, and the **sign in** link has left the nav.
+The home page's footer says **Signed in as 'testUser1'**, and the nav has only **books** and **shelves**.
+The **sign in** link has left, and there is no sign out button yet.
 
-{{<figure src="images/signed-in.webp" alt="The home page for testUser1, with no sign in link in the nav, the message Signed in as 'testUser1', and Signed in as 'testUser1' in the footer" caption="The page now knows who signed in.">}}
+{{<figure src="images/signed-in.webp" alt="The home page for testUser1, with only books and shelves in the nav, the message Signed in as 'testUser1', and Signed in as 'testUser1' in the footer" caption="The page now knows who signed in.">}}
 
 ```plaintext {linenos=false}
 
@@ -1083,7 +1085,7 @@ export async function createUserController(ctx) {
 `createUserController` now signs them in straight away with `signin`, as soon as `createUser` gives back the new row.
 It welcomes them in a flash and redirects to the home page, just as signing in does.
 
-Open [sign up][signup], register as **alice** with the password `Alice123!`, and you land on the home page signed in, with the message **Welcome, alice**.
+Open [sign up][signup], register as **alice** with the password `alice123!`, and you land on the home page signed in, with the message **Welcome, alice**.
 
 {{<figure src="images/welcome.webp" alt="The home page after signing up as alice, with a sign out button in the nav, the message Welcome, alice, and Signed in as 'alice' in the footer" caption="A new user is signed in as soon as they sign up.">}}
 

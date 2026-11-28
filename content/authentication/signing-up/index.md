@@ -227,7 +227,8 @@ It flashes that the user was created and redirects to the sign in page, ready fo
 Signing in is still a stub, so it doesn't check the password yet.
 But the users table now has a row for each new user, with a hashed password and never the one they typed.
 
-Open [sign up][signup], choose a new username, **alice**, and a password that meets the rules, `Alice123!`.
+Open [sign up][signup] and choose a username and a password that meet the rules.
+There are no seeded users yet, so **alice** with the password `alice123!` will do.
 You land on the sign in page, with the message **User 'alice' created**.
 
 {{<figure src="images/signup-created.webp" alt="The sign in page with the message User 'alice' created" caption="A new account is created, and you are sent to sign in.">}}
@@ -489,9 +490,10 @@ A taken name now gives the form back with a `400` and the message, like any othe
 The `UNIQUE` constraint stays on the column, as a last line of defence.
 
 Try signing up as **testUser1** again.
-The form comes back with **Username already taken.** under the username, and the username is kept.
+The form comes back with **Username already taken.** under the username.
+The username is kept, and the password box is empty.
 
-{{<figure src="images/username-taken.webp" alt="The sign up page with testUser1 in the username field and Username already taken. under it" caption="A taken username is rejected with a message, not a server error.">}}
+{{<figure src="images/username-taken.webp" alt="The sign up page with testUser1 in the username field, Username already taken. under it, and an empty password box" caption="A taken username is rejected with a message, not a server error.">}}
 
 ```plaintext {linenos=false}
 
