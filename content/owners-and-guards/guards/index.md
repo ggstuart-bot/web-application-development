@@ -10,7 +10,7 @@ We will start with a simple check in one controller, then turn it into a *guard*
 
 <!--more-->
 
-> You should be able to sign up, sign in and sign out, with a session, from the previous exercise.
+> You should be able to sign up, sign in and sign out, with a session, from the [previous exercise][previous exercise].
 > Your database should hold the seeded users, **testUser1** and **testUser2**. If you have been experimenting, run `deno task db:reset` to get back to the seed data.
 > Before you start, make sure everything is committed to your git repository.
 
@@ -620,4 +620,5 @@ These are questions to investigate, not changes to keep.
 [signin]: http://localhost:8000/signin
 [signup]: http://localhost:8000/signup
 [owners]: owners-and-guards/owners/
+[previous exercise]: authentication/signing-in-and-out/
 [shelf 999]: http://localhost:8000/shelves/999
