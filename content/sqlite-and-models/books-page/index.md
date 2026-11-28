@@ -425,11 +425,12 @@ This time we set the columns.
 
 Refresh [http://localhost:8000/books][books] and change the width of the window.
 The number of columns changes to fit.
+In the picture there are three, with Catching Fire alone on the last row.
 
 > `class="grid"` describes the layout, not the books.
 > Any list we want to show as a grid can use it.
 
-{{<figure src="images/books-grid.webp" alt="The books page with the 16 titles laid out in four columns" caption="The books page now shows the titles in a grid.">}}
+{{<figure src="images/books-grid.webp" alt="The books page with the 16 titles in as many 15rem columns as fit the window, three in this picture, with Catching Fire alone on the last row" caption="The books page now shows the titles in a grid.">}}
 
 ## A card for each book {#book-card}
 
@@ -511,7 +512,7 @@ The headings and paragraphs inside a card lose their margins and are all the sam
 Refresh [http://localhost:8000/books][books].
 Each book is now a bordered box with its title, author and year.
 
-{{<figure src="images/books-cards.webp" alt="The books page with each book in a bordered box showing its title, author and year" caption="Each book is now a card with its title, author and year.">}}
+{{<figure src="images/books-cards.webp" alt="The books page with each book in a bordered box showing its title, author and year, and only the top edge of Catching Fire visible at the bottom" caption="Each book is now a card with its title, author and year.">}}
 
 ## Covers {#cover}
 
@@ -701,7 +702,7 @@ Our books page is finished, for now.
 > Make the window narrow and wide again.
 > The cards and the columns all adjust together.
 
-{{<figure src="images/books-finished.webp" alt="The finished books page, with each card showing a cover on the left and the title, author and year on the right" caption="The finished books page, with each cover beside its title, author and year.">}}
+{{<figure src="images/books-finished.webp" alt="The finished books page, with all 16 cards showing a cover on the left and the title, author and year on the right, Catching Fire alone on the last row, and the footer visible" caption="The finished books page, with each cover beside its title, author and year.">}}
 
 ### Lazy loading {#lazy-loading}
 

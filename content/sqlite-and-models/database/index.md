@@ -381,7 +381,7 @@ The page now starts at the beginning of the alphabet, and the same books appear 
 But some of the cards are broken.
 **1st to Die**, **2001: A Space Odyssey**, **A Beautiful Mind**, **A Bend in the Road** and **A Child Called "It"** have no cover, just a broken image.
 
-{{<figure src="images/broken-covers.webp" alt="The books page sorted by title, where the cards for 1st to Die, 2001: A Space Odyssey and A Beautiful Mind show a broken image where the cover should be" caption="Sorting by title brings some books with no cover onto the page.">}}
+{{<figure src="images/broken-covers.webp" alt="The books page sorted by title, starting at 'Salem's Lot, where the cards for 1st to Die, 2001: A Space Odyssey, A Beautiful Mind and A Bend in the Road show a broken image where the cover should be" caption="Sorting by title brings some books with no cover onto the page.">}}
 
 We noted when we [added covers][covers] that some books have no cover.
 None of the first 16 books in **books.json** were like that, but sorting has brought five of them onto our page.
@@ -444,7 +444,7 @@ Otherwise, `cover` is `book.coverUrl`.
 Refresh [http://localhost:8000/books][books].
 Every card now has a cover.
 
-{{<figure src="images/default-cover.webp" alt="The same books page, where 1st to Die, 2001: A Space Odyssey and A Beautiful Mind now show a plain grey book as their cover" caption="Books without a cover now get the default one.">}}
+{{<figure src="images/default-cover.webp" alt="The same books page, where 1st to Die, 2001: A Space Odyssey, A Beautiful Mind and A Bend in the Road now show a plain grey book as their cover" caption="Books without a cover now get the default one.">}}
 
 ## Conclusion
 
