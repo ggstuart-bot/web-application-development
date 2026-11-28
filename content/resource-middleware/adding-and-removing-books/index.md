@@ -131,7 +131,7 @@ function addToShelfForms(book, shelves) {
 }
 ```
 
-- The aside sits beside the book's details, just like the [new shelf form][aside styles] on the shelves page. Our stylesheet already puts an aside in a second column on a wide screen.
+- The aside sits beside the book's details. Our stylesheet already puts an aside in a second column on a wide screen, with a line between it and the section, just as it does for the [new shelf form][aside styles]. This aside isn't a `secondary` form, so it stays light and the buttons stay outlined.
 - `addToShelfForms` makes one small form for each shelf. With no shelves, it says so instead.
 - Each form has `method="POST"` and a single button, but no inputs at all.
 
@@ -142,7 +142,7 @@ The shelf's id and the book's id are both in the path, so there's nothing for th
 Refresh [http://localhost:8000/books/1][book 1].
 The aside has a button for each shelf: **add to 'classics'**, **add to 'fantasy'** and **add to 'to read'**.
 
-{{<figure src="images/add-buttons.webp" alt="The Hunger Games book page, with the cover and details on the left and an Add to a shelf panel on the right, holding a button for each of the three shelves" caption="Each shelf gets its own add button.">}}
+{{<figure src="images/add-buttons.webp" alt="The Hunger Games book page, with the cover and details on the left and a light Add to a shelf aside on the right, separated by a vertical line, with outlined buttons reading add to 'classics', add to 'fantasy' and add to 'to read'" caption="Each shelf gets its own add button.">}}
 
 Press **add to 'to read'**.
 There's no route for that address yet, so we get our **Not found** page.
@@ -518,10 +518,10 @@ The first card's index is `0`, which is falsy, but every other card would show i
 The [arrow function][arrow functions] calls `bookCard` with just the book.
 
 Open the **classics** shelf at [http://localhost:8000/shelves/1][shelf 1].
-Each book card has a **remove** button.
+The cards are **To Kill a Mockingbird**, **The Great Gatsby**, **Pride and Prejudice** and **Jane Eyre**, each with a **remove** button.
 The books page, [http://localhost:8000/books][books], has no buttons and no numbers.
 
-{{<figure src="images/remove-buttons.webp" alt="The classics shelf page, with four book cards, each with a remove button at the bottom" caption="Each book on a shelf gets a remove button.">}}
+{{<figure src="images/remove-buttons.webp" alt="The classics shelf, with four book cards in order: To Kill a Mockingbird, The Great Gatsby, Pride and Prejudice and Jane Eyre, each with an outlined remove button, and a Back to all shelves link underneath" caption="Each book on a shelf gets a remove button.">}}
 
 Press a **remove** button.
 There's no route yet, so we get the **Not found** page again.

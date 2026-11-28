@@ -411,7 +411,7 @@ Then try [http://localhost:8000/books/99999][book 99999], which gets the not fou
 Now we can add a new feature with very little code.
 A shelf should have a button that deletes it.
 
-Update **server/views/shelf.js** to add an aside, like the one on the shelves page.
+Update **server/views/shelf.js** to add an aside, like the one on the book page.
 
 **server/views/shelf.js**
 ```JavaScript {hl_lines="20-24"}
@@ -451,9 +451,9 @@ function removeForm(shelf, book) {
 - The note above it says that the books stay in the catalogue. Deleting a shelf only deletes the shelf and its links to books, never the books themselves.
 
 Open [http://localhost:8000/shelves/3][shelf 3].
-The **Delete shelf** panel sits beside the books.
+The cards are **The Kite Runner**, **The Book Thief** and **Life of Pi**, with the **Delete shelf** aside beside them.
 
-{{<figure src="images/delete-button.webp" alt="The to read shelf page, with three book cards on the left and a Delete shelf panel on the right, saying The books stay in the catalogue above a delete shelf button" caption="The delete button sits in an aside beside the books.">}}
+{{<figure src="images/delete-button.webp" alt="The to read shelf, with three book cards on the left: The Kite Runner, The Book Thief and Life of Pi, and a light Delete shelf aside on the right, separated by a vertical line, with the note The books stay in the catalogue above an outlined delete shelf button" caption="The delete button sits in an aside beside the books.">}}
 
 Press **delete shelf**.
 There's no route yet, so we get the **Not found** page.
