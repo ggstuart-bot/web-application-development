@@ -32,7 +32,7 @@ deno task dev
 ```
 
 Sign in as **adminUser** (the password is `adminUser1!`) and open [users][users].
-**testUser2**'s picture is missing, and their link is the not found page.
+**testUser2**'s picture is a plain grey circle, and their link is the not found page.
 An admin looking after users needs to see them.
 
 Update `canViewUser` in **server/tools/permissions.js**.
@@ -1061,10 +1061,11 @@ On someone else's profile, an admin's aside has just the **Admin status** sectio
 The avatar form and the visibility button are still yours alone, because `canChangeAvatar` and `canPublishProfile` haven't changed.
 
 Sign in as **adminUser** and open [**testUser1**'s profile][user 1]: **Admin status**, with **make admin**.
+**Public shelves** lists **classics** and **fantasy**; **to read** is private, so it isn't there.
 Press it, and you're back on the users page with **testUser1** an admin.
 Your own profile has no admin section, because you can't change your own status.
 
-{{<figure src="images/admin-status.webp" alt="testUser1's profile viewed by adminUser, with an aside headed Admin status and a make admin button" caption="An admin can change another user's status from their profile.">}}
+{{<figure src="images/admin-status.webp" alt="testUser1's profile viewed by adminUser, with Public shelves listing classics and fantasy, and an aside that has only Admin status and a make admin button" caption="An admin can change another user's status from their profile.">}}
 
 ## The pattern, complete {#pattern}
 

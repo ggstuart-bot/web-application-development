@@ -209,7 +209,7 @@ export function myShelvesView(ctx) {
 }
 ```
 
-When your profile is private, My shelves ends with **Publish your profile to share shelves**, linked to `/profile`.
+When your profile is private, My shelves ends with a link, **Publish your profile**, then the words **to share shelves**.
 
 The Visibility section on your shelf's page has more to decide now, so it gets a function of its own.
 Update **server/views/myShelf.js**.
@@ -278,7 +278,7 @@ function removeForm(shelf, book) {
 As **testUser2**, open [My shelves][shelves] and [**sci-fi**][shelf 4]: both point you at your profile.
 **testUser1** sees no link, and the buttons as before.
 
-{{<figure src="images/publish-your-profile.webp" alt="testUser2's sci-fi shelf, with a Visibility section saying Only you can see this shelf and a link to Publish your profile to share shelves" caption="A private user is told how to share a shelf.">}}
+{{<figure src="images/publish-your-profile.webp" alt="testUser2's sci-fi shelf, with a Visibility section saying Only you can see this shelf, then a Publish your profile link followed by to share shelves" caption="A private user is told how to share a shelf.">}}
 
 ## Check the route {#may-publish-shelf}
 
@@ -668,7 +668,7 @@ export function server(request) {
 ```
 
 As **testUser2**, do the devtools trick again.
-This time you get the forbidden page.
+This time you get the forbidden page, and the address bar stays at `/shelves/4/publish`.
 
 ```plaintext {linenos=false}
 
@@ -688,7 +688,7 @@ RESPONSE 403
 > Point the form at **testUser1**'s shelf instead, `/shelves/1/publish`.
 > You still get the not found page, because `mayUseShelf` turns you away first: **classics** isn't yours.
 
-{{<figure src="images/forbidden.webp" alt="The Forbidden page, saying You do not have permission to take the requested action" caption="Our first 403.">}}
+{{<figure src="images/forbidden.webp" alt="The Forbidden page at /shelves/4/publish, saying You do not have permission to take the requested action" caption="Our first 403, still at the URL you posted to.">}}
 
 ## Private profile, private shelves {#unpublish-on-private}
 
@@ -1802,7 +1802,8 @@ The `> .avatar` rule is [nested][css nesting] inside `.card.user`, so it only ap
 
 As **adminUser**, open [users][users].
 You see **testUser1**, **testUser2** and **adminUser**.
-**testUser2**'s profile and picture are private, so their picture is missing and their link is the not found page, even for an admin.
+**testUser2**'s profile and picture are private, so their picture is a plain grey circle, and their link is the not found page, even for an admin.
+The circle is grey because the rounded corners clip the browser's broken-image icon.
 The page still isn't guarded, so **testUser2** can see everyone too.
 
 ## Badges {#user-badges}
@@ -2136,7 +2137,7 @@ RESPONSE 403
 
 As **adminUser**, it opens as before.
 
-{{<figure src="images/users-page.webp" alt="The users page for adminUser, with cards for testUser1, testUser2 and adminUser, each with an avatar, a name and badges" caption="Only admins can open the users page.">}}
+{{<figure src="images/users-page.webp" alt="The users page for adminUser, with cards for testUser1 (public), testUser2 (a grey circle and a private badge) and adminUser (admin and public)" caption="Only admins can open the users page.">}}
 
 ## Conclusion
 
