@@ -270,7 +270,7 @@ The comment above the rule now mentions the errors too.
 
 Try an empty title again.
 
-{{<figure src="images/title-required.webp" alt="The Shelves page, where the New shelf form beside the shelves has an empty Title box with the message Title is a required field underneath, marked with a red bar down its left side" caption="An empty title is rejected, with a message under the field.">}}
+{{<figure src="images/title-required.webp" alt="The Shelves page, with the shelves link filled in the nav, and the New shelf form in a dark panel in the right-hand aside, with an empty Title box and the message Title is a required field underneath, marked with a red bar down its left side" caption="An empty title is rejected, with a message under the field.">}}
 
 ## A validator {#required}
 
@@ -634,7 +634,9 @@ The input's `value` is the rejected title, or an empty string when there isn't o
 Try **a title that is far too long for a shelf** again.
 This time the title is still in the input, under the message, ready to be fixed.
 
-{{<figure src="images/title-kept.webp" alt="The New shelf form, with the long title still in the Title box and the message Title must be no more than 25 characters underneath" caption="A rejected title is kept, so it can be fixed.">}}
+{{<figure src="images/title-kept.webp" alt="The New shelf form in a dark panel, with the long title still in the Title box, slightly cut off at the end, and the message Title must be no more than 25 characters underneath" caption="A rejected title is kept, so it can be fixed.">}}
+
+In the picture the box is a little narrow, so the end of the title is slightly cut off.
 
 Now try **"Quotes" are fine here, honest**.
 It is too long, so it comes back, quotes and all.

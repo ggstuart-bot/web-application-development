@@ -195,7 +195,7 @@ export function server(request) {
 
 Click the **sign up** link again.
 
-{{<figure src="images/signup-page.webp" alt="The Sign up page, with the sign up link filled in the nav, a line inviting existing users to sign in, and a form with Username and Password boxes and a sign up button" caption="The sign up page.">}}
+{{<figure src="images/signup-page.webp" alt="The Sign up page, with books, shelves and a filled sign up link in the nav, a line that says Already have an account? sign in to gain access, and a dark form with Username and Password boxes and a sign up button" caption="The sign up page.">}}
 
 Type a username and a password and press **sign up**.
 We get the not found page, because there is no `POST` route for **/signup**.
@@ -830,7 +830,7 @@ The line is split in an odd place, between `values` and `?.username`, but it mea
 
 Sign up as **ab**, with the password **sekrit**.
 
-{{<figure src="images/signup-errors.webp" alt="The Sign up form with ab still in the Username box and the message Username must be at least 3 characters under it, and an empty Password box with the message Password must be at least 8 characters under it" caption="Every problem is shown at once, and the username is kept.">}}
+{{<figure src="images/signup-errors.webp" alt="The Sign up form in a dark panel, with ab still in the Username box and the message Username must be at least 3 characters under it, and an empty Password box with the message Password must be at least 8 characters under it" caption="Every problem is shown at once, and the username is kept.">}}
 
 Both messages are there, and **ab** is still in the username input.
 View the page source (**Ctrl+U**), and you won't find **sekrit** anywhere.
