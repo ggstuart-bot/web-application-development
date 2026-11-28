@@ -785,7 +785,7 @@ In the [next exercise][next exercise] we will move each lookup into a middleware
 
 > If you tried any changes, undo them, and run `deno task db:reset`, so that your code and data match the starting point of the next exercise.
 
-[previous unit]: post-redirect-flash/form-that-posts/
+[previous unit]: post-redirect-flash/
 [prg]: post-redirect-flash/form-that-posts/#post-redirect-get
 [aside styles]: post-redirect-flash/form-that-posts/#aside-styles
 [set flash]: post-redirect-flash/cookies-and-flash/#set-flash
@@ -796,10 +796,10 @@ In the [next exercise][next exercise] we will move each lookup into a middleware
 [shelves]: http://localhost:8000/shelves
 [books]: http://localhost:8000/books
 [jane eyre]: http://localhost:8000/books?q=jane+eyre
-[stub address]: #stub-address
+[stub address]: resource-middleware/adding-and-removing-books/#stub-address
 [conditional operator]: user-input-and-security/search/#title
 [nesting]: user-input-and-security/escaping/#nesting
-[default parameters]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters
+[default parameters]: views-and-controllers/controllers/#options
 [footer]: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/footer
-[arrow functions]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
+[arrow functions]: javascript-fundamentals/book-search/#arrow-functions
 [next exercise]: resource-middleware/route-middleware/

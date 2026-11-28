@@ -90,7 +90,7 @@ export class Router {
 }
 ```
 
-- `register` takes any number of handlers after the pathname. `...handlers` is a [rest parameter][rest], just like the `...args` in our [get and post shortcuts][get post], so `handlers` is an array.
+- `register` takes any number of handlers after the pathname. `...handlers` is a rest parameter, just like the `...args` in our [get and post shortcuts][get post], so `handlers` is an array.
 - The route keeps the whole list.
 - When `dispatch` finds the route, it runs the list with `chain`, the same method that runs our middleware.
 
@@ -755,13 +755,12 @@ A middleware always has to come before the handlers that rely on it.
 
 </details>
 
-> If you tried any changes, undo them, and run `deno task db:reset`, so that your code and data match the starting point of the next exercise.
+> If you tried any changes, undo them, and run `deno task db:reset`, so that your code and data match the starting point of the next unit.
 
 [previous exercise]: resource-middleware/adding-and-removing-books/
 [stub address]: resource-middleware/adding-and-removing-books/#stub-address
 [chain]: router-class/middleware/#chain
 [get post]: post-redirect-flash/form-that-posts/#get-post
-[rest]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
 [returning]: https://www.sqlite.org/lang_returning.html
 [shelf 1]: http://localhost:8000/shelves/1
 [shelf 3]: http://localhost:8000/shelves/3
